@@ -21,4 +21,163 @@ After I agree, prepare the environment, explaining each command before you run i
 It seems that Codex checked all the files and confirmed and summarized the different types of files and the other applications needed such as React and Vite in order to build (or plan) this applicaiton.
 **What I checked myself:**
 I checked the "explorer" view to confirm if any files were updated as well as the Codex summary provided. JS (or Java Script) files are yellow, Markdown files are blue. Also for the icons on the right (u) means untracked, (M) means modified, (A) is added and no letter is unchanged.
+
+**Prompt:**
+OK, go ahead and prepare the environment.
+**What Codex did:**
+Seamed Codex checked (and modified) all the eviornments for specific version requirements (all passed). A loader read the csv data and expected columns. Its ready to brain storm.
+**What I checked myself:**
+Prompts were updated with (M) visible. I saw the thinking (explanation of what each application contributed to the whole) while Codex was reading the information.
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
+
+**Prompt:**
+**What Codex did:**
+**What I checked myself:**
 ---

@@ -14,12 +14,12 @@ my agent about it, and do not edit it afterwards; add a dated revision below ins
 ## 1. Population and target
 
 - Scenario and file:
-- One row means:
-- Number of rows (N):
-- Row order, and what it means in this file:
-- Target column and units:
-- My finite population is (and what it is not):
-- True mean I calculated (and how):
+- One row means: One appointment
+- Number of rows (N): 10,000 
+- Row order, and what it means in this file: time order, week by week, Monday to Friday, slot 1 to 20 within each day. These neighbouring rows are neighbouring appointments in time.
+- Target column and units:wait_time; minutes
+- My finite population is (and what it is not): what it is (these 10,000 simulated appointments) and what it isn’t (not every clinic, every week, or real patients)
+- True mean I calculated (and how): 22.6842 minutes, from Excel =AVERAGE(F2:F10001) and awk over all 10,000 rows, which agreed 
 
 ## 2. Design choices
 
