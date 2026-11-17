@@ -65,3 +65,69 @@ export function simpleRandomSample(population, n, seed) {
   }
   return indices.slice(0, n).map((index) => population[index]);
 }
+
+export function systematicSample(population, n, seed) {
+  if (!Number.isInteger(n) || n < 1 || n > population.length) {
+    throw new RangeError("Sample size must be an integer from 1 through N");
+  }
+  const interval = population.length / n;
+  const random = seededRandom(seed);
+  if (Number.isInteger(interval)) {
+    const start = Math.floor(random() * interval) + 1;
+    return {
+      rows: Array.from({ length: n }, (_, j) => population[start - 1 + j * interval]),
+      interval,
+      start,
+      design: "whole-number",
+    };
+  }
+  const start = (1 - random()) * interval; // Uniform on (0, interval].
+  const rows = Array.from({ length: n }, (_, j) => {
+    const oneBasedIndex = Math.min(population.length, Math.ceil(start + j * interval));
+    return population[oneBasedIndex - 1];
+  });
+  return { rows, interval, start, design: "fractional" };
+}
+
+export function stratifiedAllocation(population, n, column = "visit_type") {
+  const groups = new Map();
+  for (const row of population) {
+    const key = row[column];
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+  const strata = [...groups].map(([name, rows]) => ({ name, rows, size: rows.length, weight: rows.length / population.length }));
+  if (!Number.isInteger(n) || n < strata.length || n > population.length) {
+    throw new RangeError(`Stratified sampling needs at least ${strata.length} rows, one per group, and at most N`);
+  }
+  const allocated = strata.map((stratum) => {
+    const quota = n * stratum.weight;
+    return { ...stratum, quota, allocation: Math.max(1, Math.min(stratum.size, Math.floor(quota))) };
+  });
+  let total = allocated.reduce((sum, stratum) => sum + stratum.allocation, 0);
+  while (total < n) {
+    const next = allocated.filter((s) => s.allocation < s.size)
+      .sort((a, b) => (b.quota - b.allocation) - (a.quota - a.allocation))[0];
+    next.allocation++;
+    total++;
+  }
+  while (total > n) {
+    const next = allocated.filter((s) => s.allocation > 1)
+      .sort((a, b) => (a.quota - a.allocation) - (b.quota - b.allocation))[0];
+    next.allocation--;
+    total--;
+  }
+  return allocated;
+}
+
+export function stratifiedSample(population, n, seed, column = "visit_type") {
+  const strata = stratifiedAllocation(population, n, column).map((stratum) => ({
+    ...stratum,
+    sample: simpleRandomSample(stratum.rows, stratum.allocation, `${seed}:${column}:${stratum.name}`),
+  }));
+  return { rows: strata.flatMap((stratum) => stratum.sample), strata };
+}
+
+export function weightedStratifiedMean(strata) {
+  return strata.reduce((sum, stratum) => sum + stratum.weight * sampleMean(stratum.sample), 0);
+}

@@ -78,14 +78,30 @@ Context: my data is data/clinic_visits.csv, N = 10000. Row order: chronological,
 **What Codex did:**
 Codex decided to give me the options within the chat. options given were: Method Panel and Guided Method cards. 
 **What I checked myself:**
+Nothing was updated. I worked on decisions within my DECISIONS.MD file.
+
+## 3b. Setup (Agent mode) – 2026-11-16
+**Prompt:**
+I have switched you out of Plan mode. Implement the interaction approach I chose: guided method cards. Three cards (Simple random, Systematic, Stratified) sit in a row above my existing grid, each showing its selection rule in plain language and its relevant settings. Choosing a card highlights that method's sample in the grid and updates the sample estimate beside the labelled true mean; the active card stays visibly selected. My reason: all three selection rules stay visible on one screen, so a clinician can compare how each method chooses appointments without switching back and forth. Keep my existing visualization and design, including the Overview/Detail toggle; in Overview, all 100 weeks must still fit on one screen with the cards above the grid.
+- Replace the temporary sample with three methods in the shared sampling module, following the sampling rules in AGENT_BRIEF.md: simple random sampling without replacement; systematic sampling with a random start in the file's row order; stratified sampling on visit_type.
+- Use the same total sample size for all three methods, default 100, and let users change it. Simple random and systematic sampling must work for every n from 1 to N, including 1, 10 and 100, so never restrict n to divisors of N.
+- Users must be able to identify the selection rule for each method, change a relevant setting, and see the selected observations and the estimate update beside the true mean.
+- Systematic: show the row order, the interval and the random start, and tell the user whether the whole-number or the fractional-interval design is in use.
+- Stratified: show the allocation for each visit type (whole numbers that total n, none above the group size), and the population-weighted estimate with its weights. If n is smaller than 3 (the number of visit types), do not draw a stratified sample: show a clear message that stratified sampling needs at least one appointment per visit type. Do not change n for the other methods.
+- Explain in the app what the row order of my file means and that interval sampling of an unordered list means something different from sampling a chronological record. Do not tell users how this will affect results.
+- Run automated correctness checks on the shared module, as AGENT_BRIEF.md describes: exactly n distinct rows for simple random and systematic sampling at n = 1, 10, 100 and an n that does not divide N; the same seed reproduces the same sample; allocations total n and none exceeds its stratum; weights sum to 1; the weighted estimator gives the known answer on a small synthetic population. Tell me which checks pass.
+- When you finish, explain in plain language how each method behaves and what I can check in the running app. Do not tell me how the methods will compare. Leave the app stopped.
+**What Codex did:**
+Updated src and test files. As well as verified that the updaetd were implemented.
+**What I checked myself:**
+I ran the bash run_app.sh prompt and saw how the application worked. No grave issues to report. The updated are the following: simple, systemic and stratified options.
 
 **Prompt:**
+Display only: in the Systematic card, show the interval and start as whole numbers when the whole-number design is in use (e.g. "interval 100 rows; start row 35"), and with decimals only for the fractional-interval design. Also make sure the hover shows each appointment's row number (visit_id). Do not change the sampling module.
 **What Codex did:**
+Minor issue that was resolved my Codex
 **What I checked myself:**
-
-**Prompt:**
-**What Codex did:**
-**What I checked myself:**
+I checked n = 137 (fractional design), n = 2 (the stratified block), the allocations and weights by hand, and the predicted systematic rows.
 
 **Prompt:**
 **What Codex did:**
