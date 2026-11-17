@@ -69,9 +69,14 @@ Do not add free mouse-wheel or pinch zoom. Do not change the sampling logic, the
 **What Codex did:**
 Codez added all my changes. However the overview view looked really small and bareably able to be read. This will suffice for revision 1 as it meets the requirements.
 **What I checked myself:**
+I ran bash and looked at the new fixes/resolutions we asked Codex to build. The overview chart is very washed out and the detail as mentioned above is non-existant.
 
+## 3a. Setup (Agent mode) – 2026-11-16
 **Prompt:**
+I have switched you to Plan mode. Stay in Plan mode and do not implement changes yet; do not create, edit or delete any files. Propose two distinct ways users could interact with my existing visualization to understand simple random, systematic, and stratified sampling (or one proposal with a meaningful alternative). Keep the sampling rules statistically correct. For each approach, explain how users could understand why observations were selected, change a relevant sampling setting, and see the sample estimate update. Discuss the strengths and limitations with me before implementing anything.
+Context: my data is data/clinic_visits.csv, N = 10000. Row order: chronological, week by week, Monday to Friday, slot 1 to 20 within each day (see data/README.md). The sampling rules are in AGENT_BRIEF.md. My existing visualization is the 100-week × weekday grid with an Overview/Detail toggle; keep it.
 **What Codex did:**
+Codex decided to give me the options within the chat. options given were: Method Panel and Guided Method cards. 
 **What I checked myself:**
 
 **Prompt:**
