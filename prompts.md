@@ -165,8 +165,10 @@ I have switched you out of Plan mode. Implement the challenge controls I chose: 
 - Do not add saved histories, styling or extra features unless I ask.
 - Run automated correctness checks, as AGENT_BRIEF.md describes: the file on disk is unchanged; the modified true mean equals the mean of the modified rows and is unchanged by reordering alone; each day in the sorted copy is in non-increasing wait_time order; the systematic design is re-checked for the modified N; all four results use the same n; the same seed reproduces the same numbers. Tell me which checks pass.
 - Do not run my investigation for me, report its results or tell me whether my hypothesis is supported; I will interpret the evidence myself. Leave the app stopped.
-**What Codex did:**
+**What Codex did:** 
+Codex updated the application with my request and chosen method and startegy.
 **What I checked myself:**
+I checked the application and provided evidence in the evidence folder.
 
 **Prompt:**
 **What Codex did:**
