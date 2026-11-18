@@ -5,6 +5,7 @@ import {
   parseClinicCsv, simpleRandomSample, systematicSample, stratifiedAllocation,
   stratifiedSample, weightedStratifiedMean, trueMean,
   summarizeEstimates, enumerateSystematicStarts, repeatedSampling, runBaselineExperiments,
+  sortedWithinDaysCopy, runChallenge,
 } from "../src/sampling.js";
 
 const rows = parseClinicCsv(readFileSync(new URL("../data/clinic_visits.csv", import.meta.url), "utf8"));
@@ -113,4 +114,79 @@ test("Experiment B reuses Experiment A's SRS n = 100 result", () => {
   assert.strictEqual(result.A[0], result.B[2]);
   assert.equal(result.A[1].type, "exact");
   assert.ok([...result.A, ...result.B].every((item) => item.estimates.length === item.count));
+});
+
+test("sorted copy keeps days, rows, values and tie order while adding new positions", () => {
+  const original = [
+    { visit_id: 1, week: 1, weekday: "Mon", slot: 1, wait_time: 4 },
+    { visit_id: 2, week: 1, weekday: "Mon", slot: 2, wait_time: 9 },
+    { visit_id: 3, week: 1, weekday: "Mon", slot: 3, wait_time: 9 },
+    { visit_id: 4, week: 1, weekday: "Tue", slot: 1, wait_time: 6 },
+    { visit_id: 5, week: 1, weekday: "Tue", slot: 2, wait_time: 2 },
+  ];
+  const before = JSON.stringify(original);
+  const sorted = sortedWithinDaysCopy(original);
+  assert.deepEqual(ids(sorted), [2, 3, 1, 4, 5]);
+  assert.deepEqual(sorted.map((row) => row.sorted_position), [1, 2, 3, 1, 2]);
+  assert.deepEqual(sorted.map((row) => row.slot), [2, 3, 1, 1, 2]);
+  assert.equal(trueMean(sorted), trueMean(original));
+  assert.equal(JSON.stringify(original), before);
+  assert.ok(sorted.every((row) => !original.includes(row)));
+});
+
+test("real CSV stays unchanged while every day in the copy is sorted", () => {
+  const csvPath = new URL("../data/clinic_visits.csv", import.meta.url);
+  const bytesBefore = readFileSync(csvPath);
+  const sorted = sortedWithinDaysCopy(rows);
+  assert.equal(sorted.length, rows.length);
+  assert.equal(new Set(ids(sorted)).size, rows.length);
+  assert.equal(trueMean(sorted), trueMean(rows));
+  assert.equal(trueMean(sorted), sorted.reduce((sum, row) => sum + row.wait_time, 0) / sorted.length);
+  const dayGroups = new Map();
+  for (const row of sorted) {
+    const key = `${row.week}:${row.weekday}`;
+    if (!dayGroups.has(key)) dayGroups.set(key, []);
+    dayGroups.get(key).push(row);
+  }
+  assert.equal(dayGroups.size, 500);
+  for (const day of dayGroups.values()) {
+    assert.equal(day.length, 20);
+    assert.deepEqual(day.map((row) => row.sorted_position), Array.from({ length: 20 }, (_, index) => index + 1));
+    assert.ok(day.every((row, index) => index === 0 || day[index - 1].wait_time >= row.wait_time));
+  }
+  assert.deepEqual(readFileSync(csvPath), bytesBefore);
+});
+
+test("challenge keeps four separate labelled conditions at the same n", () => {
+  const original = Array.from({ length: 100 }, (_, index) => ({
+    visit_id: index + 1, week: 1, weekday: index < 50 ? "Mon" : "Tue",
+    slot: index % 50 + 1, visit_type: index < 50 ? "A" : "B", wait_time: index % 7,
+  }));
+  const sorted = sortedWithinDaysCopy(original);
+  const baselineSrs = repeatedSampling(original, "srs", 100, 100, "same");
+  const results = runChallenge(original, sorted, 100, "same", baselineSrs);
+  assert.equal(results.length, 4);
+  assert.deepEqual(results.map((result) => result.method), ["systematic", "systematic", "srs", "srs"]);
+  assert.deepEqual(results.map((result) => result.condition), ["Baseline", "Sorted copy (modified)", "Baseline", "Sorted copy (modified)"]);
+  assert.ok(results.every((result) => result.n === 100 && result.count === result.estimates.length));
+  assert.ok(results.every((result) => result.populationMean === trueMean(result.condition === "Baseline" ? original : sorted)));
+  assert.ok(results.every((result) => Math.abs(result.rmse ** 2 - result.bias ** 2 - result.sd ** 2) < 1e-9));
+  assert.deepEqual(results.map((result) => result.estimates), runChallenge(original, sorted, 100, "same").map((result) => result.estimates));
+  assert.equal(results[0].type, "exact");
+  assert.equal(results[1].type, "exact");
+  assert.equal(results[0].seed, undefined);
+  assert.equal(results[1].seed, undefined);
+  assert.equal(results[2].seed, "same");
+  assert.equal(results[3].seed, "same");
+});
+
+test("systematic design is checked again for a changed population size", () => {
+  const original = Array.from({ length: 101 }, (_, index) => ({
+    visit_id: index + 1, week: 1, weekday: "Mon", slot: index + 1, wait_time: index,
+  }));
+  const sorted = sortedWithinDaysCopy(original);
+  assert.equal(systematicSample(sorted, 100, "same").design, "fractional");
+  const result = repeatedSampling(sorted, "systematic", 100, 100, "same");
+  assert.equal(result.type, "Monte Carlo");
+  assert.equal(result.estimates.length, 100);
 });

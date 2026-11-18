@@ -132,6 +132,20 @@ export function weightedStratifiedMean(strata) {
   return strata.reduce((sum, stratum) => sum + stratum.weight * sampleMean(stratum.sample), 0);
 }
 
+// Return new rows in the new file order. The source rows and their original slot values stay intact.
+export function sortedWithinDaysCopy(population) {
+  const days = new Map();
+  for (const row of population) {
+    const key = `${row.week}:${row.weekday}`;
+    if (!days.has(key)) days.set(key, []);
+    days.get(key).push(row);
+  }
+  return [...days.values()].flatMap((day) => day
+    .map((row, originalPosition) => ({ row, originalPosition }))
+    .sort((a, b) => b.row.wait_time - a.row.wait_time || a.originalPosition - b.originalPosition)
+    .map(({ row }, index) => ({ ...row, sorted_position: index + 1 })));
+}
+
 export function summarizeEstimates(estimates, populationMean) {
   if (!estimates.length) throw new Error("At least one estimate is required");
   const average = estimates.reduce((sum, value) => sum + value, 0) / estimates.length;
@@ -198,4 +212,19 @@ export function runBaselineExperiments(population, repetitions, seed) {
     A: [srs100, repeatedSampling(population, "systematic", 100, repetitions, seed), repeatedSampling(population, "stratified", 100, repetitions, seed)],
     B: [repeatedSampling(population, "srs", 1, repetitions, seed), repeatedSampling(population, "srs", 10, repetitions, seed), srs100],
   };
+}
+
+export function runChallenge(population, sortedCopy, repetitions, seed, matchingBaselineSrs = null) {
+  const n = 100;
+  const baselineMean = trueMean(population);
+  const sortedMean = trueMean(sortedCopy);
+  const baselineSrs = matchingBaselineSrs?.method === "srs" && matchingBaselineSrs.n === n
+    && matchingBaselineSrs.count === repetitions && matchingBaselineSrs.seed === seed
+    ? matchingBaselineSrs : repeatedSampling(population, "srs", n, repetitions, seed);
+  return [
+    { condition: "Baseline", populationMean: baselineMean, ...repeatedSampling(population, "systematic", n, repetitions, seed) },
+    { condition: "Sorted copy (modified)", populationMean: sortedMean, ...repeatedSampling(sortedCopy, "systematic", n, repetitions, seed) },
+    { condition: "Baseline", populationMean: baselineMean, ...baselineSrs },
+    { condition: "Sorted copy (modified)", populationMean: sortedMean, ...repeatedSampling(sortedCopy, "srs", n, repetitions, seed) },
+  ];
 }

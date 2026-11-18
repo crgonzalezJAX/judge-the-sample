@@ -54,10 +54,10 @@ value for modified rows). Keep each result in its own row: never pool estimates.
 | Methods at n = 100 | baseline | Stratified | visit_type, proportional allocation 55/25/20 | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | -0.07 | 1.38 | 1.38 |
 | Sample size | baseline | Simple random | without replacement | crisg-m12 | 1 | 1000 | Monte Carlo | 22.6842 | 0.58 | 15.47 | 15.48 |
 | Sample size | baseline | Simple random | without replacement | crisg-m12 | 10 | 1000 | Monte Carlo | 22.6842 | 0.01 | 4.65 | 4.65 |
-| Challenge | baseline | (method I challenged) | | | | | | | | | |
-| Challenge | modified | (method I challenged) | | | | | | | | | |
-| Challenge | baseline | (alternative or correction) | | | | | | | | | |
-| Challenge | modified | (alternative or correction) | | | | | | | | | |
+| Challenge | baseline | Systematic | chronological file order, whole-number interval 100 | exact | 100 | 100 starts | exact | 22.6842 | 0.00 | 6.96 | 6.96 |
+| Challenge | modified (sorted copy) | Systematic | each day sorted by wait_time, longest first; interval 100 | exact | 100 | 100 starts | exact | 22.6842 | 0.00 | 12.84 | 12.84 |
+| Challenge | baseline | Simple random | without replacement | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | 0.03 | 1.48 | 1.49 |
+| Challenge | modified (sorted copy) | Simple random | without replacement; each day sorted by wait_time, longest first | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | -0.03 | 1.49 | 1.49 |
 
 The simple random n = 100 row is also the n = 100 sample-size result when the population and
 settings match. If I reran it with different settings, I add a separate row. All four challenge
