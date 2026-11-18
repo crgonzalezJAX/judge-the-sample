@@ -145,7 +145,9 @@ I did not check anything extra as I had already checked the app before I had mad
 **What I checked myself:**
 I upated the decisions portion with an updated portion 4a.
 
+## 5a. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+I have already written my own hypothesis independently and have now switched you to Plan mode. Stay in Plan mode and do not implement changes yet; do not create, edit or delete any files. Here is my own hypothesis about how a condition could change the reliability of my chosen sampling method: I am challenging systematic sampling at n = 100. In a modified copy of the population, I sort each day's appointments by wait_time, longest wait first, keeping weeks and days in order and keeping the original file unchanged. At n = 100 the interval is 100 rows, so each start picks the same weekday and the same position within the day every week; after sorting, that position is tied directly to wait time, so I predict greater SD and RMSE for systematic estimates after sorting. My alternative method is simple random sampling on both the baseline and sorted copies, also at n = 100, because it draws from appointments across the entire file. Propose two distinct ways to let users apply those conditions in my existing app (or one proposal with a meaningful alternative). Do not implement anything until I have chosen an approach and switched to implementation mode. Keep the sampling methods statistically correct and do not substitute a different hypothesis. The feature must recalculate the modified population's true mean and compare, at the same total n and with repeated sampling, my chosen method on the baseline and modified populations and my alternative on the corresponding baseline and modified populations, each result clearly labelled and judged against its own population's true mean. Keep the plan simple: no saved experiment histories or extra features unless I ask.
 **What Codex did:**
 **What I checked myself:**
 

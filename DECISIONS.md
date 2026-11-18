@@ -34,6 +34,9 @@ The stratification column I chose was "visit_type". Visit types are expected to 
 - Stage 4, presentation of the method comparison and sample-size experiments:
 I decided to choose "aligned estimate plots" due to all plots sharing one wait-time scale and one true-mean line. There are some minor limitations, but those are being fixed by the use of semi-transparent dots, so piles show up as darker areas at 1,000 reps. The benefit to the clinician is that each dot is one sample’s average and this is very intuitive.
 - Stage 5, challenge controls and my alternative method or correction:
+I chose the following: Condition switch, and as it follows my methodology of one screen and the overview still fits.
+I added a sorted grid as it shows each appointment at its new sorted position because it shows the order systematic sampling follows.
+Finally I chose the alternative method which was the simple random sampling on both baseline and sorted.
 
 ## 3. Results table
 
