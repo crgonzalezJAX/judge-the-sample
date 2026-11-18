@@ -170,9 +170,18 @@ Codex updated the application with my request and chosen method and startegy.
 **What I checked myself:**
 I checked the application and provided evidence in the evidence folder.
 
+## 6a. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+Prepare my app for GitHub Pages, following the standard Vite + GitHub Pages approach. My repository is crgonzalezJAX/judge-the-sample.
+- In vite.config.js, set base: '/judge-the-sample/'. Keep the CSV loaded through the existing ?raw import from data/, so no separate CSV path is needed.
+- Create .github/workflows/deploy.yml using the standard Vite + GitHub Pages workflow: on push to main, install dependencies with npm ci, run npm run build, upload the dist/ folder as the Pages artifact, and deploy it with actions/deploy-pages.
+- Make sure run_app.sh still works locally.
+- Do not change the sampling module, the app design, data/, DECISIONS.md or README.md.
+- Run npm run build and the existing automated checks, and tell me which pass. Then tell me what I need to do in GitHub's settings. Do not push; I will commit and push myself.
 **What Codex did:**
+Update the content package.json and run_app.sh
 **What I checked myself:**
+Went on the site
 
 **Prompt:**
 **What Codex did:**
