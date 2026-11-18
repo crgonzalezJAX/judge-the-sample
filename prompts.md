@@ -112,9 +112,23 @@ Codex didnt change anything. What it did was provide me with two options. And th
 **What I checked myself:**
 There was nothing to check as there were no files that were updated.
 
+## 4b. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+I have switched you out of Plan mode. Implement the presentation I chose: aligned estimate plots. Experiment A has one dot plot per method and Experiment B has one per sample size; every plot shares one horizontal wait-time scale (minutes) and one labelled true-mean line, with a compact bias / SD of estimates / RMSE row under each plot. Use semi-transparent dots so piles of estimates show up as darker areas at 1,000 repetitions. My reason: a shared scale and true-mean line let a reader compare how spread out each result is and how far it sits from the true mean at a glance, and each dot being one sample's average is intuitive for a clinician. Add it to my existing app below the grid and keep my design, including the guided method cards and the Overview/Detail toggle.
+- Following AGENT_BRIEF.md, add repeated sampling to the shared sampling module: for each condition, at least 100 random repetitions (default 100, with a control to increase to 1,000), or all k random starts for systematic sampling with a whole-number interval (exact enumeration). Random repetitions must be seeded and reproducible. Set the app's default seed to crisg-m12.
+- Keep n and the repetition count as separate settings: each repetition draws one sample of n observations without replacement and calculates one estimate. Show the repetition count beside each result, and explain briefly in the app that 100 repetitions usually reveal the main pattern while 1,000 give smoother distributions and more stable bias, SD and RMSE estimates.
+- Experiment A: simple random, systematic and stratified (visit_type) sampling at n = 100, same population.
+- Experiment B: simple random sampling at n = 1, 10 and 100, with the population and method fixed. Reuse the simple random n = 100 result from Experiment A when the population and settings match.
+- Run the experiments only when I press a clearly labelled Run button, not on every keystroke, and compute the repetitions once in the shared module so every display reuses the same numbers.
+- Label every current result Monte Carlo (with its seed) or exact (no seed), and show its population, method, settings, n and repetition or start count. Never pool results that differ in any label.
+- Show the distribution of estimates in my chosen presentation, with the true population mean clearly labelled, plus bias (mean of estimates minus true mean), the SD of the estimates and RMSE, in minutes, as AGENT_BRIEF.md defines them. Clearly distinguish a single sample's result (the grid and cards above) from the distribution across repetitions.
+- The app only needs to show current results. Do not add saved experiment histories, styling, animations or other extras unless I ask.
+- Run automated correctness checks, as AGENT_BRIEF.md describes: the same seed reproduces the same numbers; each repetition has n distinct rows; the number of estimates equals the repetition count; exact enumeration lists each of the k starts once; bias, SD and RMSE match hand calculations on a small synthetic population with a known answer; RMSE² = bias² + SD². Tell me which checks pass.
+- Do not run my experiments for me, report their results or tell me what they mean; I will run and interpret them myself. Leave the app stopped.
 **What Codex did:**
+Codex updated the program with the latest content. Files src and tests were updated. 
 **What I checked myself:**
+I checked the program. Codex added detail relevant with the Monte Carlo analysis as well as the required visual charts for visualizations. I also ran the program and initiated the different scenarios in order to fill the results section. I also cropped 2 images that serve as evidence for specific comparison methods.
 
 **Prompt:**
 **What Codex did:**

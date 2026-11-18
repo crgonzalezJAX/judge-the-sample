@@ -9,7 +9,9 @@ settings, seed (if the result is random), n, and the number of repetitions or ex
 starts. One labelled file per comparison is enough:
 
 - `method-comparison-n100.png` (or `.csv`)
+
 - `sample-size-comparison.png`
+
 - `challenge-baseline-vs-modified.png`
 
 A challenge file may show baseline and modified results together, as long as each result is

@@ -131,3 +131,71 @@ export function stratifiedSample(population, n, seed, column = "visit_type") {
 export function weightedStratifiedMean(strata) {
   return strata.reduce((sum, stratum) => sum + stratum.weight * sampleMean(stratum.sample), 0);
 }
+
+export function summarizeEstimates(estimates, populationMean) {
+  if (!estimates.length) throw new Error("At least one estimate is required");
+  const average = estimates.reduce((sum, value) => sum + value, 0) / estimates.length;
+  const bias = average - populationMean;
+  const sd = Math.sqrt(estimates.reduce((sum, value) => sum + (value - average) ** 2, 0) / estimates.length);
+  const rmse = Math.sqrt(estimates.reduce((sum, value) => sum + (value - populationMean) ** 2, 0) / estimates.length);
+  return { bias, sd, rmse };
+}
+
+export function enumerateSystematicStarts(population, n) {
+  const interval = population.length / n;
+  if (!Number.isInteger(n) || n < 1 || n > population.length || !Number.isInteger(interval)) {
+    throw new RangeError("Exact enumeration needs a whole-number systematic interval");
+  }
+  return Array.from({ length: interval }, (_, index) => {
+    const start = index + 1;
+    const rows = Array.from({ length: n }, (_, j) => population[start - 1 + j * interval]);
+    return { start, rows, estimate: sampleMean(rows) };
+  });
+}
+
+export function repeatedSampling(population, method, n, repetitions, seed, onDraw) {
+  const populationMean = trueMean(population);
+  if (method === "systematic" && Number.isInteger(population.length / n)) {
+    const starts = enumerateSystematicStarts(population, n);
+    const estimates = starts.map((item) => item.estimate);
+    return { method, n, type: "exact", count: starts.length, starts: starts.map((item) => item.start), estimates,
+      interval: population.length / n, ...summarizeEstimates(estimates, populationMean) };
+  }
+  if (!Number.isInteger(n) || n < 1 || n > population.length) throw new RangeError("Invalid sample size");
+  if (!["srs", "systematic", "stratified"].includes(method)) throw new Error("Unknown sampling method");
+  if (!Number.isInteger(repetitions) || repetitions < 100) {
+    throw new RangeError("Monte Carlo needs at least 100 repetitions");
+  }
+  const estimates = [];
+  for (let repetition = 0; repetition < repetitions; repetition++) {
+    const drawSeed = `${seed}:${method}:${n}:${repetition}`;
+    if (method === "srs") {
+      const rows = simpleRandomSample(population, n, drawSeed);
+      onDraw?.(rows);
+      estimates.push(sampleMean(rows));
+    }
+    if (method === "systematic") {
+      const rows = systematicSample(population, n, drawSeed).rows;
+      onDraw?.(rows);
+      estimates.push(sampleMean(rows));
+    }
+    if (method === "stratified") {
+      const draw = stratifiedSample(population, n, drawSeed);
+      onDraw?.(draw.rows);
+      estimates.push(weightedStratifiedMean(draw.strata));
+    }
+  }
+  return { method, n, type: "Monte Carlo", count: repetitions, seed, estimates,
+    ...(method === "stratified" ? { strata: stratifiedAllocation(population, n).map(({ name, size, allocation, weight }) => ({ name, size, allocation, weight })) } : {}),
+    ...(method === "systematic" ? { interval: population.length / n } : {}),
+    ...summarizeEstimates(estimates, populationMean) };
+}
+
+export function runBaselineExperiments(population, repetitions, seed) {
+  const srs100 = repeatedSampling(population, "srs", 100, repetitions, seed);
+  return {
+    populationMean: trueMean(population),
+    A: [srs100, repeatedSampling(population, "systematic", 100, repetitions, seed), repeatedSampling(population, "stratified", 100, repetitions, seed)],
+    B: [repeatedSampling(population, "srs", 1, repetitions, seed), repeatedSampling(population, "srs", 10, repetitions, seed), srs100],
+  };
+}

@@ -46,11 +46,11 @@ value for modified rows). Keep each result in its own row: never pool estimates.
 
 | Experiment | Population or condition | Method | Settings | Seed (or exact) | n | Repetitions or starts | Type | True mean | Bias | SD | RMSE |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Methods at n = 100 | baseline | Simple random | | | 100 | | | | | | |
-| Methods at n = 100 | baseline | Systematic | | | 100 | | | | | | |
-| Methods at n = 100 | baseline | Stratified | | | 100 | | | | | | |
-| Sample size | baseline | Simple random | | | 1 | | | | | | |
-| Sample size | baseline | Simple random | | | 10 | | | | | | |
+| Methods at n = 100 | baseline | Simple random | without replacement | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | 0.03 | 1.48 | 1.49 |
+| Methods at n = 100 | baseline | Systematic | whole-number interval 100, chronological row order | exact | 100 | 100 starts | exact | 22.6842 | 0.00 | 6.96 | 6.96 |
+| Methods at n = 100 | baseline | Stratified | visit_type, proportional allocation 55/25/20 | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | -0.07 | 1.38 | 1.38 |
+| Sample size | baseline | Simple random | without replacement | crisg-m12 | 1 | 1000 | Monte Carlo | 22.6842 | 0.58 | 15.47 | 15.48 |
+| Sample size | baseline | Simple random | without replacement | crisg-m12 | 10 | 1000 | Monte Carlo | 22.6842 | 0.01 | 4.65 | 4.65 |
 | Challenge | baseline | (method I challenged) | | | | | | | | | |
 | Challenge | modified | (method I challenged) | | | | | | | | | |
 | Challenge | baseline | (alternative or correction) | | | | | | | | | |
