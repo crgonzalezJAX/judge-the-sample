@@ -69,13 +69,13 @@ rows use the same n; a challenge baseline row may repeat a matching stage 4 resu
 
 Hypothesis, written before I consult my agent:
 
-- Date written:
-- Method I chose to challenge:
-- The change to the population or its ordering:
-- Why the selection rule would interact with that change:
-- Evidence I expect across repeated samples:
-- Alternative method or correction I will compare, and why:
-- Evidence that would contradict my hypothesis:
+- Date written: November 17, 2026.
+- Method I chose to challenge: Systematic sampling.
+- The change to the population or its ordering: In a copy, sort each day’s appointments by wait_time, highest first; keep the original file unchanged.
+- Why the selection rule would interact with that change: At n = 100, a start follows the same weekday and sorted position across weeks.
+- Evidence I expect across repeated samples: I predict greater SD and RMSE for systematic estimates after sorting.
+- Alternative method or correction I will compare, and why: Simple random sampling on both copies, also at n = 100. Simple random sampling draws from appointments across the entire file.
+- Evidence that would contradict my hypothesis: The predicted increase would not be supported if systematic SD and RMSE stay the same or become smaller.
 
 After I test it:
 
