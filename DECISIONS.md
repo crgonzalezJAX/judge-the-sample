@@ -59,9 +59,6 @@ value for modified rows). Keep each result in its own row: never pool estimates.
 | Challenge | baseline | Simple random | without replacement | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | 0.03 | 1.48 | 1.49 |
 | Challenge | modified (sorted copy) | Simple random | without replacement; each day sorted by wait_time, longest first | crisg-m12 | 100 | 1000 | Monte Carlo | 22.6842 | -0.03 | 1.49 | 1.49 |
 
-The simple random n = 100 row is also the n = 100 sample-size result when the population and
-settings match. If I reran it with different settings, I add a separate row. All four challenge
-rows use the same n; a challenge baseline row may repeat a matching stage 4 result.
 
 ## 4. Findings (in my own words, using my own numbers)
 
