@@ -7,7 +7,7 @@ App link (optional):
 
 - **Scenario:** <!-- clinic waiting times / healthcare costs / wearable heart rate -->
 - **Data file:** `data/<!-- file name -->` (source, licence and provenance in `data/README.md`)
-- **Seed(s) used for my evidence** (exact enumeration needs no seed):
+- **Seed(s) used for my evidence** (exact enumeration needs no seed): crisg-m12
 
 ## Run it on your computer
 

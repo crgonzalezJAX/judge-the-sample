@@ -103,9 +103,14 @@ Minor issue that was resolved my Codex
 **What I checked myself:**
 I checked n = 137 (fractional design), n = 2 (the stratified block), the allocations and weights by hand, and the predicted systematic rows.
 
+## 4a. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+I have switched you to Plan mode. Stay in Plan mode and do not implement changes yet; do not create, edit or delete any files. Propose two distinct ways to present two experiments in my app (or one proposal with a meaningful alternative). Experiment A compares simple random, systematic and stratified sampling at n = 100 on the same population. Experiment B investigates sample size using simple random sampling at n = 1, 10 and 100, with the population and method fixed. Monte Carlo results use 100 repetitions by default, with a control to increase to 1,000; n and the repetition count are separate settings. Users must be able to see how much estimates vary, compare them with the true population mean, and tell consistent error from random variation. Keep the true mean visible and label each current result with its settings. Keep the plan simple: do not design saved experiment histories or extra features unless I ask. Keep my existing grid and guided method cards. Explain the strengths and limitations of each approach, and discuss them with me before implementing anything.
+Please do not run any experiments or tell me what results to expect: I will read and interpret them myself.
 **What Codex did:**
+Codex didnt change anything. What it did was provide me with two options. And those options I discussed with my agent and went ahead with one of them.
 **What I checked myself:**
+There was nothing to check as there were no files that were updated.
 
 **Prompt:**
 **What Codex did:**
