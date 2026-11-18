@@ -130,13 +130,20 @@ Codex updated the program with the latest content. Files src and tests were upda
 **What I checked myself:**
 I checked the program. Codex added detail relevant with the Monte Carlo analysis as well as the required visual charts for visualizations. I also ran the program and initiated the different scenarios in order to fill the results section. I also cropped 2 images that serve as evidence for specific comparison methods.
 
+## 4c. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+Question only, no changes: in the Experiment A systematic plot, what does each dot's vertical position represent? Is it random jitter like the other plots, or are dots ordered by their start number?
 **What Codex did:**
+Codex answered my question about the systematic dots as a “rising, slightly angled line. No files were modified.
 **What I checked myself:**
+I did not check anything extra as I had already checked the app before I had made this inquiry.
 
+## 4d. Setup (Agent mode) – 2026-11-17
 **Prompt:**
-**What Codex did:**
+- (a) Method comparison: At n = 100 on the baseline clinic population, all three methods had bias close to zero: simple random 0.03 min, stratified −0.07 min (Monte Carlo, 1,000 repetitions, seed crisg-m12), and systematic 0.00 min (exact, all 100 starts). These biases are tiny compared with the spread of the estimates, so I read them as simulation noise rather than a method being off target. The real difference was variability. Simple random (SD 1.48, RMSE 1.49) and stratified (SD 1.38, RMSE 1.38) were close, with stratified slightly tighter, and both plots were concentrated around the true mean. Systematic was far more spread out (SD 6.96, RMSE 6.96): its estimates ranged widely along the wait-time axis, from well below to well above the true mean, rather than clustering around it. For this population at n = 100, judged by RMSE, I would trust simple random and stratified, and not systematic.
+**What Codex did:**Answered my inquiry about the small findings using the Monte Carlo Analysis.
 **What I checked myself:**
+I upated the decisions portion with an updated portion 4a.
 
 **Prompt:**
 **What Codex did:**
