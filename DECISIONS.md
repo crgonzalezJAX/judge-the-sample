@@ -77,6 +77,8 @@ Hypothesis, written before I consult my agent:
 - Alternative method or correction I will compare, and why: Simple random sampling on both copies, also at n = 100. Simple random sampling draws from appointments across the entire file.
 - Evidence that would contradict my hypothesis: The predicted increase would not be supported if systematic SD and RMSE stay the same or become smaller.
 
+- Clarification added November 17, 2026 (after an AI clarifying-questions check; original lines above unchanged): Why (line 75, expanded): At n = 100 the interval is 100 rows, which is exactly one week, so each start picks the same weekday and the same slot in every week. In the baseline file, slots are in time-of-day order, and earlier slots tend to have shorter waits than later ones, but only as a tendency, not for every appointment. After sorting each day by wait time, longest first, each start instead picks the same sorted position every day, and position is perfectly tied to wait time within each day: a start near position 1 always picks that day's longest waits and a start near position 20 always picks the shortest. So different starts should give sample means that are much farther apart than in the baseline, which is why I expect the systematic SD to be a lot greater after sorting.
+
 After I test it:
 
 - Test settings (conditions, methods, alternative method or correction, n, seeds); results are in the table above:
