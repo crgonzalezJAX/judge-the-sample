@@ -205,19 +205,38 @@ Switch to implementation. Build the CSS 3D carousel as an optional "Command cent
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5a (1-4). Setup (Agent mode) – 2026-11-17
 **Prompt:**
+On hud-experiment, Command center view only. Make the carousel a visible 3D ring: all five panels arranged around a circle with CSS perspective, side panels clearly angled and receding, a soft reflection or glow "floor" under the active panel, and the ring rotates smoothly when navigating. The active panel stays flat, front-facing and fully readable. Keep prefers-reduced-motion (no rotation). No new dependencies. Do not change sampling.js, results or Standard view. Run the checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5b (1-4). Setup (Agent mode) – 2026-11-17
 **Prompt:**
+Note: I discarded the 3D ring with git restore; src/ is back to the E1 commit. Do not re-add the ring.
+Fixes on hud-experiment, Command center view (keep Standard view unchanged):
+1. Charts are washed out on the dark theme. In Experiments A, B and Challenge plots, use bright high-contrast dots (e.g. cyan, higher opacity), a thick bright true-mean line with a readable label, and brighter axis text and metric numbers.
+2. In the Sampling methods panel, clicking a method card shows nothing there. Show the selected method's current single sample inside that panel: a compact mini-grid or summary with sample mean beside the labelled true mean.
+Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5c (1-4). Setup (Agent mode) – 2026-11-17
 **Prompt:**
+On hud-experiment, Command center view (Standard view unchanged), no ring:
+1. Result plots (Experiments A, B, Challenge): give each plot box a lighter, contrasting background so cyan dots stand out; make the true-mean line thick and bright (e.g. amber) with a clearly readable "True population mean 22.68" label; round each result box's corners to match the outer panels.
+2. Transpose the population grid in both views: X axis = weeks 1–100 left to right; Y axis = Mon–Fri rows, each with its 20 slots stacked top to bottom. Keep all 10,000 marks, colours, sampled outlines, hover, Overview/Detail, and the sorted-copy layout. Overview shows all 100 weeks with no horizontal scroll; update axis labels and legend.
+Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5d (1-4). Setup (Agent mode) – 2026-11-17
 **Prompt:**
+On hud-experiment, Command center view only, apply this colour scheme (keep the dark navy page background):
+- Grid and plot boxes: white cards, rounded corners, soft shadow; text navy #0F2A44, secondary #4A6278.
+- Population grid: remove per-week lines; light gray-blue #DCE6EE lines only every 10 weeks and between days. Wait-time colours light blue #DEEBF7 to dark navy #08306B, capped at 60+ min (legend says "60+"). Sampled marks orange #F28E2B with dark outline; unsampled stay blue.
+- Plots (A, B, Challenge): dots #2B6CB0 at about 60% opacity; true-mean line thick coral #E4572E with a label badge "True mean 22.68 min" on a white pill above the line, clearly readable in every plot including Challenge.
+Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
