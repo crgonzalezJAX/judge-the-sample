@@ -57,7 +57,7 @@ const systematicSetting = (sample) => sample.design === "whole-number"
   ? `interval ${sample.interval} rows; start row ${sample.start}`
   : `interval ${sample.interval.toFixed(3)} rows; start ${sample.start.toFixed(3)} within the interval`;
 
-function EstimatePlot({ result, domain, populationMean, title, condition = "Baseline", commandMode = false }) {
+function EstimatePlot({ result, domain, populationMean, title, condition = "Baseline", commandMode = false, reducedMotion = false }) {
   const [low, high] = domain;
   const x = (value) => 20 + ((value - low) / (high - low)) * 860;
   const trueMeanX = x(populationMean);
@@ -70,7 +70,20 @@ function EstimatePlot({ result, domain, populationMean, title, condition = "Base
     <p className="result-label">{condition} (all 10,000 appointments) · {title} · {settings} · n = {result.n} · {result.type} · {result.count} {result.type === "exact" ? "starts" : "repetitions"}{result.type === "Monte Carlo" ? ` · seed ${result.seed}` : " · no seed"} · true population mean {populationMean.toFixed(2)} min</p>
     <svg className="estimate-plot" viewBox={commandMode ? "0 0 900 88" : "0 0 900 72"} role="img" aria-label={`${title}: ${result.count} estimates on a shared wait-time scale, with true population mean marked`}>
       <line x1="20" x2="880" y1={commandMode ? "67" : "58"} y2={commandMode ? "67" : "58"} stroke="#52616b" />
-      {result.estimates.map((value, index) => <circle key={index} cx={x(value)} cy={commandMode ? 26 + ((index * 37) % 29) : 11 + ((index * 37) % 39)} r="2.5" fill="#175a91" fillOpacity="0.22" />)}
+      {result.estimates.map((value, index) => {
+        const finalX = x(value);
+        const finalY = commandMode ? 26 + ((index * 37) % 29) : 11 + ((index * 37) % 39);
+        const flow = commandMode && !reducedMotion;
+        const delay = (index / Math.max(1, result.estimates.length)) * 1.35;
+        const dx = 450 - finalX;
+        const dy = 2 - finalY;
+        return <circle key={index} cx={finalX} cy={finalY} r="2.5" fill="#175a91" fillOpacity="0.22" opacity={flow ? 0 : 1}>
+          {flow && <>
+            <animateMotion path={`M ${dx} ${dy} Q ${dx * 0.5 + (index % 2 ? 46 : -46)} ${dy * 0.45 - 10} 0 0`} begin={`${delay}s`} dur="1.2s" calcMode="spline" keyTimes="0;1" keySplines="0.16 1 0.3 1" fill="freeze" />
+            <animate attributeName="opacity" from="0" to="1" begin={`${delay}s`} dur="0.12s" fill="freeze" />
+          </>}
+        </circle>;
+      })}
       <line x1={trueMeanX} x2={trueMeanX} y1={commandMode ? "20" : "3"} y2={commandMode ? "67" : "61"} stroke="#a11d2b" strokeWidth="2" />
       {commandMode ? <>
         <rect className="true-mean-badge" x={badgeX} y="2" width="150" height="18" rx="9" />
@@ -139,9 +152,13 @@ function App() {
   const [repetitions, setRepetitions] = useState(100);
   const [experiments, setExperiments] = useState(null);
   const [challenge, setChallenge] = useState(null);
+  const [experimentRun, setExperimentRun] = useState(0);
+  const [challengeRun, setChallengeRun] = useState(0);
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [terrainMounted, setTerrainMounted] = useState(false);
   const [terrainActive, setTerrainActive] = useState(false);
   const [terrainUnavailable, setTerrainUnavailable] = useState(false);
+  const [weekFocus, setWeekFocus] = useState(1);
   const activePopulation = condition === "Baseline" ? population : sortedPopulation;
   const activeMean = condition === "Baseline" ? populationMean : sortedPopulationMean;
   const byWeekDay = condition === "Baseline" ? baselineByWeekDay : sortedByWeekDay;
@@ -180,6 +197,13 @@ function App() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [displayMode]);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(preference.matches);
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (displayMode !== "command") return;
@@ -300,12 +324,18 @@ function App() {
           {terrainUnavailable && <span role="status">3D could not start in this browser; the 2D grid remains available.</span>}
           {terrainActive && <span>Drag to rotate; scroll to zoom. Column height = wait time, capped at 60+ min.</span>}
         </div>}
+        {displayMode === "command" && terrainMounted && <div className="terrain-week-controls" role="group" aria-label="3D week focus">
+          <button type="button" disabled={weekFocus === 1} onClick={() => setWeekFocus((week) => week - 1)}>Previous week</button>
+          <label htmlFor="terrain-week-slider">Week {weekFocus}</label>
+          <input id="terrain-week-slider" type="range" min="1" max="100" step="1" value={weekFocus} onChange={(event) => setWeekFocus(Number(event.target.value))} aria-label="Selected week" />
+          <button type="button" disabled={weekFocus === 100} onClick={() => setWeekFocus((week) => week + 1)}>Next week</button>
+        </div>}
         <div className={`grid-scroll ${view}${displayMode === "command" && terrainMounted ? " terrain-hidden" : ""}`}>
           <CalendarGrid view={view} condition={condition} byWeekDay={byWeekDay} sampledIds={sampledIds} />
         </div>
         {displayMode === "command" && terrainMounted && <TerrainErrorBoundary onError={() => { setTerrainUnavailable(true); setTerrainActive(false); setTerrainMounted(false); }}>
           <Suspense fallback={<div className="terrain-loading">Loading 3D terrain…</div>}>
-            <TerrainView rows={activePopulation} sampledIds={sampledIds} condition={condition} active={terrainActive} onExitComplete={() => setTerrainMounted(false)} onUnavailable={() => { setTerrainUnavailable(true); setTerrainActive(false); setTerrainMounted(false); }} />
+            <TerrainView rows={activePopulation} sampledIds={sampledIds} condition={condition} focusWeek={weekFocus} active={terrainActive} onExitComplete={() => setTerrainMounted(false)} onUnavailable={() => { setTerrainUnavailable(true); setTerrainActive(false); setTerrainMounted(false); }} />
           </Suspense>
         </TerrainErrorBoundary>}
         <div className="legend" aria-label={displayMode === "command" ? "Wait time colour legend from 0 to 60 or more minutes; orange marks are sampled" : `Wait time colour legend from ${minWait} to ${maxWait} minutes`}><span>Colour = wait time</span><span>Shorter: {displayMode === "command" ? 0 : minWait} min</span><div className="gradient" /><span>Longer: {displayMode === "command" ? "60+" : maxWait} min</span>{displayMode === "command" && <span className="sample-key"><span className="sample-key-mark" /> sampled</span>}</div>
@@ -328,20 +358,20 @@ function App() {
       <p>Each dot is one sample estimate. The grid above shows one sample; the plots below show estimates across repetitions or all possible starts. The {displayMode === "command" ? "coral" : "red"} line is the true population mean: {populationMean.toFixed(2)} minutes.</p>
       <div className="experiment-controls">
         <label>Monte Carlo repetitions: <select value={repetitions} onChange={(event) => setRepetitions(Number(event.target.value))}><option value="100">100</option><option value="1000">1,000</option></select></label>
-        <button type="button" onClick={() => setExperiments(runBaselineExperiments(population, repetitions, seed))}>Run Experiments A and B</button>
+        <button type="button" onClick={() => { setExperiments(runBaselineExperiments(population, repetitions, seed)); setExperimentRun((run) => run + 1); }}>Run Experiments A and B</button>
       </div>
       <p className="repetition-help">Sample size n and repetition count are separate. Each Monte Carlo repetition draws a new sample of n distinct appointments; an appointment can appear in later repetitions. 100 repetitions usually reveal the main pattern; 1,000 give smoother distributions and more stable bias, SD and RMSE estimates. Neither guarantees stable results, and 100 cannot reliably separate small differences. Rerun with different seeds to check whether main conclusions hold.</p>
       {experiments ? <>
         <p className="result-label">Current results from the last Run. Changing controls above does not change these results until you run again. Simple random n = 100 is reused in A and B.</p>
         <h3>Experiment A · methods at n = 100</h3>
-        {experiments.A.map((result) => <EstimatePlot key={result.method} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={{ srs: "Simple random", systematic: "Systematic", stratified: "Stratified" }[result.method]} commandMode={displayMode === "command"} />)}
+        {experiments.A.map((result) => <EstimatePlot key={`${experimentRun}-${result.method}`} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={{ srs: "Simple random", systematic: "Systematic", stratified: "Stratified" }[result.method]} commandMode={displayMode === "command"} reducedMotion={reducedMotion} />)}
       </> : <p>No experiment results yet. Press Run Experiments A and B when you are ready to investigate.</p>}
     </section>
     </PanelFrame>
     <PanelFrame mode={displayMode} index={3} activeIndex={activePanel} onSelect={selectPanel}>
     <section className="experiment-b" aria-labelledby="experiment-b-title">
       {(experiments || displayMode === "command") && <h3 id="experiment-b-title">Experiment B · simple random at n = 1, 10 and 100</h3>}
-      {experiments ? experiments.B.map((result) => <EstimatePlot key={result.n} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={`Simple random, n = ${result.n}`} commandMode={displayMode === "command"} />) : displayMode === "command" ? <p>No experiment results yet. Run Experiments A and B in the Experiment A panel when you are ready to investigate.</p> : null}
+      {experiments ? experiments.B.map((result) => <EstimatePlot key={`${experimentRun}-${result.n}`} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={`Simple random, n = ${result.n}`} commandMode={displayMode === "command"} reducedMotion={reducedMotion} />) : displayMode === "command" ? <p>No experiment results yet. Run Experiments A and B in the Experiment A panel when you are ready to investigate.</p> : null}
     </section>
     </PanelFrame>
     <PanelFrame mode={displayMode} index={4} activeIndex={activePanel} onSelect={selectPanel}>
@@ -350,12 +380,12 @@ function App() {
       <p>At n = 100, compare systematic and simple random sampling on both conditions. The sorted copy changes row order within each day, longest wait first; its true mean is recalculated from its own rows. Each result is measured against the true mean of its own condition.</p>
       <div className="experiment-controls">
         <span>Monte Carlo repetitions: {repetitions.toLocaleString()} (control above) · seed: <code>{seed}</code> · sample size: 100</span>
-        <button type="button" onClick={() => setChallenge(runChallenge(population, sortedPopulation, repetitions, seed, experiments?.A[0]))}>Run challenge</button>
+        <button type="button" onClick={() => { setChallenge(runChallenge(population, sortedPopulation, repetitions, seed, experiments?.A[0])); setChallengeRun((run) => run + 1); }}>Run challenge</button>
       </div>
       {challenge ? <>
         <p className="result-label">Current challenge results from the last Run challenge. Changing controls does not alter these results until you run again. Every plot below shares one horizontal wait-time scale.</p>
         <div className="challenge-results">
-          {challenge.map((result) => <EstimatePlot key={`${result.method}-${result.condition}`} result={result} domain={challengeDomain} populationMean={result.populationMean} condition={result.condition} title={result.method === "systematic" ? "Systematic" : "Simple random"} commandMode={displayMode === "command"} />)}
+          {challenge.map((result) => <EstimatePlot key={`${challengeRun}-${result.method}-${result.condition}`} result={result} domain={challengeDomain} populationMean={result.populationMean} condition={result.condition} title={result.method === "systematic" ? "Systematic" : "Simple random"} commandMode={displayMode === "command"} reducedMotion={reducedMotion} />)}
         </div>
       </> : <p>No challenge results yet. Press Run challenge when you are ready to investigate.</p>}
     </section>

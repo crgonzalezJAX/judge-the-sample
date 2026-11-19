@@ -119,11 +119,17 @@ dd { margin: 3px 0 0; font-size: 1.2rem; }
 .command-center-content .gradient { background: linear-gradient(to right, #deebf7, #08306b); border-color: #a7b9c8; }
 .command-center-content .terrain-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 5px 0; color: #4a6278; font-size: .82rem; }
 .command-center-content .terrain-controls button { padding: 4px 9px; font: inherit; cursor: pointer; }
+.command-center-content .terrain-week-controls { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: #0f2a44; font-size: .82rem; }
+.command-center-content .terrain-week-controls label { min-width: 52px; font-weight: bold; white-space: nowrap; }
+.command-center-content .terrain-week-controls input[type="range"] { flex: 1; min-width: 70px; }
+.command-center-content .terrain-week-controls button { font: inherit; white-space: nowrap; }
 .command-center-content .grid-scroll.terrain-hidden { display: none; }
 .command-center-content .terrain-scene, .command-center-content .terrain-loading { position: relative; height: min(48vh, 380px); min-height: 280px; width: 100%; border: 1px solid #dce6ee; border-radius: 6px; overflow: hidden; background: #f4f8fb; }
 .command-center-content .terrain-scene canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .command-center-content .terrain-scene canvas:active { cursor: grabbing; }
-.command-center-content .terrain-tooltip { position: absolute; z-index: 2; max-width: min(310px, 75%); padding: 6px 8px; border: 1px solid #0f2a44; border-radius: 4px; background: #fff; color: #0f2a44; box-shadow: 0 3px 12px #0004; font-size: .8rem; line-height: 1.3; pointer-events: none; transform: translate(10px, 10px); }
+.command-center-content .terrain-axis-hud { position: absolute; z-index: 2; top: 6px; left: 7px; display: grid; gap: 1px; max-width: min(360px, 63%); padding: 4px 6px; border: 1px solid #b8c9d7; border-radius: 4px; background: #fffE; color: #0f2a44; font-size: .68rem; line-height: 1.15; pointer-events: none; }
+.command-center-content .terrain-world-label { position: absolute; z-index: 2; left: 0; top: 0; padding: 1px 3px; border-radius: 3px; background: #fffE; color: #0f2a44; font-size: .7rem; font-weight: bold; white-space: nowrap; pointer-events: none; }
+.command-center-content .terrain-tooltip { position: absolute; z-index: 3; max-width: min(310px, 75%); padding: 6px 8px; border: 1px solid #0f2a44; border-radius: 4px; background: #fff; color: #0f2a44; box-shadow: 0 3px 12px #0004; font-size: .8rem; line-height: 1.3; pointer-events: none; transform: translate(10px, 10px); }
 .sample-key { display: inline-flex; align-items: center; gap: 4px; }
 .sample-key-mark { display: inline-block; width: 9px; height: 9px; background: #f28e2b; outline: 1px solid #0f2a44; }
 .command-center-content .estimate-plot line[stroke="#52616b"] { stroke: #4a6278; }

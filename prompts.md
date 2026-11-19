@@ -257,7 +257,14 @@ The app crashes to a blank page: "Uncaught ReferenceError: React is not defined 
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5f and g  (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
+Improve the 3D terrain (Population grid, Command center):
+1. Labels: axis labels for weeks, weekdays (Mon–Fri) and slots 1–20, plus a height scale in minutes (0, 20, 40, 60+). Labels stay readable as the view rotates.
+2. Rotation: start at a clear 3/4 view; rotate around the vertical axis with smooth damping; limit tilt so the camera never goes below the floor or flips.
+3. Week focus: show one selected week at full height and colour; all other weeks faded and low (ghosted). Add a week slider (1–100) with Previous/Next buttons and a "Week N" label; the camera eases to the selected week. Hover still shows details.
+Do not change sampling.js or results. Run checks and build; leave the app stopped.
+On hud-experiment, Command center, Experiments A, B and Challenge plots: when results are run, animate each estimate dot flowing like water from a source point at the top centre of its plot to its final position: staggered starts, a smooth curved path and ease-out so dots settle, filling the distribution over about 2–3 seconds. Final positions and numbers unchanged. Respect reduced motion (instant). No new dependencies. Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 

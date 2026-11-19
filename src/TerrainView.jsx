@@ -6,11 +6,11 @@ const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const blueLow = new THREE.Color("#deebf7");
 const blueHigh = new THREE.Color("#08306b");
 const orange = new THREE.Color("#f28e2b");
-const target = new THREE.Vector3(49.5, 0, 49.5);
-const flatCamera = new THREE.Vector3(49.5, 165, 49.501);
-const tiltedCamera = new THREE.Vector3(122, 125, 155);
+const floorColour = new THREE.Color("#f4f8fb");
+const flatCameraAt = (week) => new THREE.Vector3(week - 1, 165, 49.501);
+const tiltedCameraAt = (week) => new THREE.Vector3(week - 1 + 72, 105, 165);
 
-export default function TerrainView({ rows, sampledIds, condition, active, onExitComplete, onUnavailable }) {
+export default function TerrainView({ rows, sampledIds, condition, focusWeek, active, onExitComplete, onUnavailable }) {
   const hostRef = useRef(null);
   const sceneRef = useRef(null);
   const sampledRef = useRef(sampledIds);
@@ -37,16 +37,19 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0xf4f8fb);
     const scene = new THREE.Scene();
+    const target = new THREE.Vector3(focusWeek - 1, 0, 49.5);
     const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 500);
-    camera.position.copy(flatCamera);
+    camera.position.copy(flatCameraAt(focusWeek));
     camera.lookAt(target);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.copy(target);
     controls.enablePan = false;
     controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
     controls.minDistance = 65;
     controls.maxDistance = 310;
-    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.minPolarAngle = 0.22;
+    controls.maxPolarAngle = 1.35;
     controls.enabled = false;
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0x9bb0c1, 2.1));
@@ -60,6 +63,10 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
     const dummy = new THREE.Object3D();
     const heights = new Float32Array(rows.length);
     const positions = new Float32Array(rows.length * 2);
+    const focusMix = new Float32Array(100);
+    focusMix[focusWeek - 1] = 1;
+    let selectedWeek = focusWeek;
+    let currentSample = sampledIds;
     rows.forEach((row, index) => {
       const height = Math.min(60, Math.max(0, Number(row.wait_time)));
       const dayIndex = weekdays.indexOf(row.weekday);
@@ -67,13 +74,22 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
       heights[index] = height;
       positions[index * 2] = row.week - 1;
       positions[index * 2 + 1] = dayIndex * 20 + position - 1;
-      const blue = blueLow.clone().lerp(blueHigh, height / 60);
-      columns.setColorAt(index, sampledIds.has(row.visit_id) ? orange : blue);
     });
-    columns.instanceColor.needsUpdate = true;
+    const color = new THREE.Color();
+    const updateColours = () => {
+      rows.forEach((row, index) => {
+        const weekMix = focusMix[row.week - 1];
+        color.copy(currentSample.has(row.visit_id) ? orange : blueLow).lerp(currentSample.has(row.visit_id) ? orange : blueHigh, currentSample.has(row.visit_id) ? 0 : heights[index] / 60);
+        color.lerp(floorColour, (1 - weekMix) * 0.82);
+        columns.setColorAt(index, color);
+      });
+      columns.instanceColor.needsUpdate = true;
+    };
+    updateColours();
     const setColumns = (progress) => {
       for (let index = 0; index < rows.length; index += 1) {
-        const height = Math.max(0.04, heights[index] * progress);
+        const week = rows[index].week - 1;
+        const height = Math.max(0.04, heights[index] * (0.035 + 0.965 * focusMix[week]) * progress);
         dummy.position.set(positions[index * 2], height / 2, positions[index * 2 + 1]);
         dummy.scale.set(1, height, 1);
         dummy.updateMatrix();
@@ -84,6 +100,34 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
     };
     setColumns(0);
     scene.add(columns);
+    const floorGrid = new THREE.GridHelper(100, 10, 0xb8c9d7, 0xdce6ee);
+    floorGrid.position.set(49.5, -0.03, 49.5);
+    scene.add(floorGrid);
+
+    const worldLabels = [];
+    const addLabel = (text, point) => {
+      const element = document.createElement("span");
+      element.className = "terrain-world-label";
+      element.textContent = text;
+      host.appendChild(element);
+      worldLabels.push({ element, point });
+      return element;
+    };
+    for (const week of [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) addLabel(`${week}`, () => new THREE.Vector3(week - 1, 0, -4));
+    const activeWeekLabel = addLabel(`Week ${selectedWeek}`, () => new THREE.Vector3(selectedWeek - 1, 0, -9));
+    weekdays.forEach((day, index) => addLabel(day, () => new THREE.Vector3(selectedWeek - 4, 0, index * 20 + 9.5)));
+    for (const slot of [1, 5, 10, 15, 20]) addLabel(`Slot ${slot}`, () => new THREE.Vector3(selectedWeek + 2, 0, slot - 1));
+    for (const height of [0, 20, 40, 60]) addLabel(height === 60 ? "60+ min" : `${height} min`, () => new THREE.Vector3(selectedWeek - 5, height, -5));
+    const updateLabels = () => {
+      const width = host.clientWidth;
+      const height = host.clientHeight;
+      for (const label of worldLabels) {
+        const point = label.point().project(camera);
+        const visible = point.z > -1 && point.z < 1 && Math.abs(point.x) < 0.94 && Math.abs(point.y) < 0.92;
+        label.element.style.display = visible ? "block" : "none";
+        if (visible) label.element.style.transform = `translate(${(point.x + 1) * width / 2}px, ${(-point.y + 1) * height / 2}px)`;
+      }
+    };
 
     const resize = () => {
       const width = Math.max(1, host.clientWidth);
@@ -117,27 +161,41 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
     let progress = 0;
     let wanted = true;
     let exitNotified = false;
-    const cameraStart = flatCamera.clone();
-    const cameraEnd = tiltedCamera.clone();
+    const cameraStart = flatCameraAt(focusWeek);
+    const cameraEnd = tiltedCameraAt(focusWeek);
     let cameraElapsed = 0;
     const animate = (time) => {
       try {
       const delta = Math.min(50, lastTime === undefined ? 16 : time - lastTime);
       lastTime = time;
       const next = reducedMotion.matches ? Number(wanted) : Math.max(0, Math.min(1, progress + (wanted ? 1 : -1) * delta / 650));
-      if (next !== progress) {
-        progress = next;
-        setColumns(progress);
+      const progressChanged = next !== progress;
+      progress = next;
+      let focusChanged = false;
+      for (let week = 0; week < 100; week += 1) {
+        const goal = week === selectedWeek - 1 ? 1 : 0;
+        const newMix = reducedMotion.matches ? goal : Math.max(0, Math.min(1, focusMix[week] + (goal ? 1 : -1) * delta / 500));
+        if (newMix !== focusMix[week]) { focusMix[week] = newMix; focusChanged = true; }
       }
+      if (progressChanged || focusChanged) { setColumns(progress); if (focusChanged) updateColours(); }
       if (cameraElapsed < 650) {
         cameraElapsed = reducedMotion.matches ? 650 : Math.min(650, cameraElapsed + delta);
         const fraction = cameraElapsed / 650;
         camera.position.lerpVectors(cameraStart, cameraEnd, fraction * fraction * (3 - 2 * fraction));
         camera.lookAt(target);
       }
+      const focusDx = (selectedWeek - 1 - target.x) * (reducedMotion.matches ? 1 : 1 - Math.exp(-delta / 260));
+      if (Math.abs(focusDx) > 0.0001) {
+        target.x += focusDx;
+        controls.target.x += focusDx;
+        camera.position.x += focusDx;
+        cameraStart.x += focusDx;
+        cameraEnd.x += focusDx;
+      }
       controls.enabled = wanted && progress === 1 && cameraElapsed === 650;
       if (controls.enabled) controls.update();
       renderer.render(scene, camera);
+      updateLabels();
       if (!wanted && progress === 0 && !exitNotified) {
         exitNotified = true;
         callbacksRef.current.onExitComplete();
@@ -152,7 +210,7 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
       setActive(value) {
         if (wanted !== value) {
           cameraStart.copy(camera.position);
-          cameraEnd.copy(value ? tiltedCamera : flatCamera);
+          cameraEnd.copy(value ? tiltedCameraAt(selectedWeek) : flatCameraAt(selectedWeek));
           cameraElapsed = 0;
         }
         wanted = value;
@@ -160,12 +218,10 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
       },
       setSample(sample) {
         sampledRef.current = sample;
-        rows.forEach((row, index) => {
-          const blue = blueLow.clone().lerp(blueHigh, heights[index] / 60);
-          columns.setColorAt(index, sample.has(row.visit_id) ? orange : blue);
-        });
-        columns.instanceColor.needsUpdate = true;
+        currentSample = sample;
+        updateColours();
       },
+      setFocus(week) { selectedWeek = week; activeWeekLabel.textContent = `Week ${week}`; },
     };
 
     return () => {
@@ -176,6 +232,9 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
       geometry.dispose();
       material.dispose();
+      floorGrid.geometry.dispose();
+      floorGrid.material.dispose();
+      worldLabels.forEach(({ element }) => element.remove());
       renderer.dispose();
       renderer.domElement.remove();
       sceneRef.current = null;
@@ -184,8 +243,10 @@ export default function TerrainView({ rows, sampledIds, condition, active, onExi
 
   useEffect(() => { sceneRef.current?.setActive(active); }, [active]);
   useEffect(() => { sceneRef.current?.setSample(sampledIds); }, [sampledIds]);
+  useEffect(() => { sceneRef.current?.setFocus(focusWeek); }, [focusWeek]);
 
-  return <div className="terrain-scene" ref={hostRef} role="img" aria-label="3D terrain of all appointments: weeks across, weekdays and positions along the ground, column height and blue colour show wait time; orange columns are sampled">
+  return <div className="terrain-scene" ref={hostRef} role="img" aria-label={`3D terrain of all appointments, focused on week ${focusWeek}. Weeks run across the floor, Mon through Fri and slots 1 through 20 run along its depth; column height is wait time in minutes up to 60 or more. Orange columns are sampled.`}>
+    <div className="terrain-axis-hud" aria-hidden="true"><span>Weeks 1–100 · Focus: {focusWeek}</span><span>Days: Mon · Tue · Wed · Thu · Fri</span><span>Slots: {Array.from({ length: 20 }, (_, index) => index + 1).join(" · ")}</span><span>Height: 0 · 20 · 40 · 60+ min</span></div>
     {hover && <div className="terrain-tooltip" role="tooltip" style={{ left: hover.x, top: hover.y }}>{hover.label}</div>}
   </div>;
 }
