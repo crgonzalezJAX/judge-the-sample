@@ -183,7 +183,7 @@ Update the content package.json and run_app.sh
 **What I checked myself:**
 Went on the site
 
-## E1. Setup (Agent mode) – 2026-11-17
+## E1. Setup (Agent mode) – 2026-11-18
 **Prompt:**
 I have switched you to Plan mode. Stay in Plan mode and do not create, edit or delete any files. I am now on a separate git branch called hud-experiment to explore an optional presentation layer; the sampling rules and AGENT_BRIEF.md still apply in full.
 Idea: an optional "holographic command center" view. The app's existing sections become floating translucent panels in a 3D carousel: Population grid, Three sampling methods, Experiment A, Experiment B, and Challenge. The user navigates by trackpad or touch swipe, arrow keys, or clicking a panel; the active panel rotates to the front and the others drift back and dim. It is a dark, glowing HUD style, but all numbers, labels and the true-mean lines stay solid and high-contrast so a clinician can read them.
@@ -192,7 +192,7 @@ Propose two distinct ways to build this (for example, CSS 3D transforms versus T
 **What Codex did:**
 **What I checked myself:**
 
-## E1b. Setup (Agent mode) – 2026-11-17
+## E1b. Setup (Agent mode) – 2026-11-18
 **Prompt:**
 Switch to implementation. Build the CSS 3D carousel as an optional "Command center view" on this hud-experiment branch.
 - Toggle at the top: "Standard view" (default, unchanged) vs "Command center view".
@@ -205,13 +205,13 @@ Switch to implementation. Build the CSS 3D carousel as an optional "Command cent
 **What Codex did:**
 **What I checked myself:**
 
-## E1.5a (1-4). Setup (Agent mode) – 2026-11-17
+## E1.5a (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
 On hud-experiment, Command center view only. Make the carousel a visible 3D ring: all five panels arranged around a circle with CSS perspective, side panels clearly angled and receding, a soft reflection or glow "floor" under the active panel, and the ring rotates smoothly when navigating. The active panel stays flat, front-facing and fully readable. Keep prefers-reduced-motion (no rotation). No new dependencies. Do not change sampling.js, results or Standard view. Run the checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
-## E1.5b (1-4). Setup (Agent mode) – 2026-11-17
+## E1.5b (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
 Note: I discarded the 3D ring with git restore; src/ is back to the E1 commit. Do not re-add the ring.
 Fixes on hud-experiment, Command center view (keep Standard view unchanged):
@@ -221,7 +221,7 @@ Do not change sampling.js or results. Run checks and build; leave the app stoppe
 **What Codex did:**
 **What I checked myself:**
 
-## E1.5c (1-4). Setup (Agent mode) – 2026-11-17
+## E1.5c (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
 On hud-experiment, Command center view (Standard view unchanged), no ring:
 1. Result plots (Experiments A, B, Challenge): give each plot box a lighter, contrasting background so cyan dots stand out; make the true-mean line thick and bright (e.g. amber) with a clearly readable "True population mean 22.68" label; round each result box's corners to match the outer panels.
@@ -230,7 +230,7 @@ Do not change sampling.js or results. Run checks and build; leave the app stoppe
 **What Codex did:**
 **What I checked myself:**
 
-## E1.5d (1-4). Setup (Agent mode) – 2026-11-17
+## E1.5d (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
 On hud-experiment, Command center view only, apply this colour scheme (keep the dark navy page background):
 - Grid and plot boxes: white cards, rounded corners, soft shadow; text navy #0F2A44, secondary #4A6278.
@@ -240,11 +240,20 @@ Do not change sampling.js or results. Run checks and build; leave the app stoppe
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5d (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
+On hud-experiment, Command center view, Population grid panel only. Add a "3D terrain" mode using Three.js (add three as one pinned dependency).
+- Clicking a "View in 3D" button (or the grid card) morphs the grid from 2D to 3D: camera tilts back and each of the 10,000 appointments rises as a column, height = wait time (capped at 60+ like the colour scale), same blue colours, sampled appointments orange. Use InstancedMesh for performance.
+- Drag to rotate, scroll to zoom; hover a column shows the same appointment details.
+- "Back to 2D" (or switching panels) flattens it back with the reverse animation.
+- The sample summary and true mean stay a flat, readable 2D overlay. Respect reduced motion; if WebGL is unavailable, stay 2D.
+Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5e (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
+The app crashes to a blank page: "Uncaught ReferenceError: React is not defined at TerrainView (TerrainView.jsx:184)". Fix it the same way main.jsx handles React/JSX (e.g. add the missing React import). Also wrap the 3D terrain in an error boundary so any 3D failure falls back to the 2D grid with a short message instead of blanking the whole app. Confirm three is listed in package.json. Do not change sampling.js or results. Run checks and build; leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 

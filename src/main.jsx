@@ -1,8 +1,29 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import csv from "../data/clinic_visits.csv?raw";
 import { parseClinicCsv, simpleRandomSample, systematicSample, stratifiedSample, sampleMean, trueMean, weightedStratifiedMean, sortedWithinDaysCopy, runBaselineExperiments, runChallenge } from "./sampling.js";
 import "./style.css";
+
+const TerrainView = React.lazy(() => import("./TerrainView.jsx"));
+
+class TerrainErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  render() {
+    return this.state.failed ? <p role="status">3D could not start. The 2D grid is available.</p> : this.props.children;
+  }
+}
 
 const population = parseClinicCsv(csv);
 const populationMean = trueMean(population);
@@ -118,6 +139,9 @@ function App() {
   const [repetitions, setRepetitions] = useState(100);
   const [experiments, setExperiments] = useState(null);
   const [challenge, setChallenge] = useState(null);
+  const [terrainMounted, setTerrainMounted] = useState(false);
+  const [terrainActive, setTerrainActive] = useState(false);
+  const [terrainUnavailable, setTerrainUnavailable] = useState(false);
   const activePopulation = condition === "Baseline" ? population : sortedPopulation;
   const activeMean = condition === "Baseline" ? populationMean : sortedPopulationMean;
   const byWeekDay = condition === "Baseline" ? baselineByWeekDay : sortedByWeekDay;
@@ -163,7 +187,12 @@ function App() {
     title?.focus({ preventScroll: true });
   }, [displayMode, activePanel]);
 
+  useEffect(() => {
+    if (displayMode !== "command" || activePanel !== 0) setTerrainActive(false);
+  }, [displayMode, activePanel]);
+
   const onTouchStart = (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest(".terrain-scene")) { swipeStart.current = null; return; }
     const touch = event.touches[0];
     swipeStart.current = { x: touch.clientX, y: touch.clientY };
   };
@@ -182,7 +211,7 @@ function App() {
     if (Date.now() >= ignorePanelClickUntil.current) setActivePanel(index);
   };
   const onWheel = (event) => {
-    if (event.target instanceof HTMLElement && event.target.closest(".grid-scroll, input, textarea, select")) return;
+    if (event.target instanceof HTMLElement && event.target.closest(".grid-scroll, .terrain-scene, input, textarea, select")) return;
     if (Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.5) {
       wheelDistance.current = 0;
       return;
@@ -263,11 +292,24 @@ function App() {
           <label><input type="radio" name="grid-view" value="overview" checked={view === "overview"} onChange={() => setView("overview")} /> Overview — all 100 weeks</label>
           <label><input type="radio" name="grid-view" value="detail" checked={view === "detail"} onChange={() => setView("detail")} /> Detail — larger marks</label>
         </fieldset>
-        <div className={`grid-scroll ${view}`}>
+        {displayMode === "command" && <div className="terrain-controls">
+          <button type="button" disabled={terrainUnavailable} onClick={() => {
+            if (terrainActive) setTerrainActive(false);
+            else { setTerrainMounted(true); setTerrainActive(true); }
+          }}>{terrainActive ? "Back to 2D" : "View in 3D"}</button>
+          {terrainUnavailable && <span role="status">3D could not start in this browser; the 2D grid remains available.</span>}
+          {terrainActive && <span>Drag to rotate; scroll to zoom. Column height = wait time, capped at 60+ min.</span>}
+        </div>}
+        <div className={`grid-scroll ${view}${displayMode === "command" && terrainMounted ? " terrain-hidden" : ""}`}>
           <CalendarGrid view={view} condition={condition} byWeekDay={byWeekDay} sampledIds={sampledIds} />
         </div>
+        {displayMode === "command" && terrainMounted && <TerrainErrorBoundary onError={() => { setTerrainUnavailable(true); setTerrainActive(false); setTerrainMounted(false); }}>
+          <Suspense fallback={<div className="terrain-loading">Loading 3D terrain…</div>}>
+            <TerrainView rows={activePopulation} sampledIds={sampledIds} condition={condition} active={terrainActive} onExitComplete={() => setTerrainMounted(false)} onUnavailable={() => { setTerrainUnavailable(true); setTerrainActive(false); setTerrainMounted(false); }} />
+          </Suspense>
+        </TerrainErrorBoundary>}
         <div className="legend" aria-label={displayMode === "command" ? "Wait time colour legend from 0 to 60 or more minutes; orange marks are sampled" : `Wait time colour legend from ${minWait} to ${maxWait} minutes`}><span>Colour = wait time</span><span>Shorter: {displayMode === "command" ? 0 : minWait} min</span><div className="gradient" /><span>Longer: {displayMode === "command" ? "60+" : maxWait} min</span>{displayMode === "command" && <span className="sample-key"><span className="sample-key-mark" /> sampled</span>}</div>
-        <p className="axis-note">X axis: weeks 1–100, left to right. Y axis: Mon–Fri. Within each cell: {condition === "Baseline" ? "original slots" : "new sorted positions"} 1–20, top to bottom. {condition !== "Baseline" && "Hover to see the original slot."}</p>
+        <p className="axis-note">{displayMode === "command" && terrainMounted ? "Ground axes: weeks 1–100 across; Mon–Fri and positions 1–20 along the depth. Height: wait time, capped at 60+ minutes. " : "X axis: weeks 1–100, left to right. Y axis: Mon–Fri. Within each cell: "}{displayMode === "command" && terrainMounted ? "" : `${condition === "Baseline" ? "original slots" : "new sorted positions"} 1–20, top to bottom. `}{condition !== "Baseline" && "Hover to see the original slot."}</p>
       </section>
       <aside className="summary" aria-label="Sampling summary">
         <h2>{condition} · {methodName} single sample</h2>
