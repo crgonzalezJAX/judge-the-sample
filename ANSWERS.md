@@ -1,0 +1,15 @@
+# M12 Problem Set – Judge the Sample
+
+Note: the problem set asks whether each number comes from training or test patients. This activity has no train/test split, so I label each number by population instead: baseline (the original 10,000 appointments) or sorted copy (modified).
+
+1. **GitHub repository URL:** https://github.com/crgonzalezJAX/judge-the-sample
+
+2. **Live website URL:** https://crgonzalezjax.github.io/judge-the-sample/
+
+3. Simple random sampling picks n appointments completely at random without replacement, systematic sampling takes a random start and then every k-th row in the file's order, and stratified sampling splits the population into groups (visit type) and samples randomly within each group in proportion to its size, weighting the group means. I would not trust systematic sampling on this clinic file, because its interval locks every sample to the same weekday and slot each week, so it depends heavily on row order: its SD was 6.96 min on the baseline and 12.84 min on the sorted copy (modified), compared with 1.48 min for simple random and 1.38 min for stratified on the baseline, where stratified benefits from the group structure because visit types are expected to have different waits.
+
+4. No: one far-off sample does not prove bias, since a single simple random sample I drew at n = 100 gave 20.79 min against a true mean of 22.68 min (baseline), yet across 1,000 repetitions simple random sampling’s bias was only 0.03 min (baseline), so that miss was random variation. Repeated sampling separates the two because the average of many estimates shows whether a method is centred on the true mean (bias), while their spread shows how far any single sample can land (variability); systematic sampling, for example, had a bias of exactly 0.00 min but an SD of 6.96 min (baseline, exact), so it was unbiased but highly variable.
+
+5. As sample size increased, the spread of sample means shrank: for simple random sampling, the SD of estimates fell from 15.47 min at n = 1 to 4.65 min at n = 10 and 1.48 min at n = 100 (baseline, 1,000 repetitions, seed crisg-m12), so estimates clustered much closer to the true mean of 22.68 min. But a larger sample does not guarantee that every individual estimate is closer, since any one sample can still miss: my single n = 100 sample was 20.79 min, about 1.9 min off (baseline), and some n = 10 samples in my results landed closer to the true mean than that.
+
+6. Yes: in my challenge, systematic sampling stayed unbiased, with bias exactly 0.00 min on both the baseline and the sorted copy (modified), but sorting each day’s appointments by wait time (longest first) nearly doubled its SD and RMSE, from 6.96 min (baseline) to 12.84 min (sorted copy), because each start was locked to the same sorted position every day, so some starts always caught the longest waits and others the shortest. Simple random sampling barely changed (SD 1.48 min baseline vs 1.49 min sorted copy, 1,000 repetitions, seed crisg-m12) because it ignores row order, so under these conditions I would recommend simple random sampling over systematic sampling.
