@@ -97,19 +97,22 @@ function EstimatePlot({ result, domain, populationMean, title, condition = "Base
 
 const panelNames = ["Population grid", "Sampling methods", "Experiment A", "Experiment B", "Challenge"];
 
-function PanelFrame({ mode, index, activeIndex, onSelect, children }) {
+function PanelFrame({ mode, index, activeIndex, onSelect, transition, children }) {
   const active = mode === "standard" || index === activeIndex;
   const offset = index - activeIndex;
   const direction = Math.sign(offset);
   const distance = Math.min(Math.abs(offset), 2);
   const style = mode === "command" ? {
-    "--panel-x": `${direction * (46 + distance * 10)}%`,
-    "--panel-z": `${-distance * 180}px`,
-    "--panel-rotation": `${-direction * 24}deg`,
-    "--panel-scale": `${1 - distance * 0.1}`,
+    "--panel-x": `${direction * (150 + distance * 20)}px`,
+    "--panel-z": `${-distance * 145}px`,
+    "--panel-rotation": `${-direction * 9}deg`,
+    "--panel-scale": `${1 - distance * 0.07}`,
+    "--tab-x": `${transition?.x ?? 0}px`,
+    "--tab-y": `${transition?.y ?? -30}px`,
     zIndex: 10 - distance,
   } : undefined;
-  return <section className={`panel-frame ${active ? "is-active" : "is-inactive"}`} style={style} aria-label={panelNames[index]}>
+  const motion = mode === "command" && transition?.to === index ? " is-materializing" : mode === "command" && transition?.from === index ? " is-dissolving" : "";
+  return <section className={`panel-frame ${active ? "is-active" : "is-inactive"}${motion}`} style={style} aria-label={panelNames[index]}>
     <div className="panel-body" aria-hidden={!active} ref={(node) => { if (node) node.inert = !active; }}>
       {mode === "command" && <h2 className="panel-title" tabIndex={active ? -1 : undefined}>{panelNames[index]}</h2>}
       {children}
@@ -139,6 +142,9 @@ const CalendarGrid = React.memo(function CalendarGrid({ view, condition, byWeekD
 function App() {
   const [displayMode, setDisplayMode] = useState("standard");
   const [activePanel, setActivePanel] = useState(0);
+  const [panelTransition, setPanelTransition] = useState(null);
+  const panelNavRef = useRef(null);
+  const commandContentRef = useRef(null);
   const swipeStart = useRef(null);
   const ignorePanelClickUntil = useRef(0);
   const wheelDistance = useRef(0);
@@ -185,6 +191,21 @@ function App() {
   const challengePadding = Math.max((challengeMax - challengeMin) * 0.05, 0.5);
   const challengeDomain = [challengeMin - challengePadding, challengeMax + challengePadding];
 
+  const activatePanel = (index) => {
+    if (index === activePanel) return;
+    const tab = panelNavRef.current?.querySelectorAll("button")[index];
+    const content = commandContentRef.current;
+    const tabRect = tab?.getBoundingClientRect();
+    const contentRect = content?.getBoundingClientRect();
+    setPanelTransition({
+      from: activePanel,
+      to: index,
+      x: tabRect && contentRect ? tabRect.left + tabRect.width / 2 - (contentRect.left + contentRect.width / 2) : 0,
+      y: tabRect && contentRect ? tabRect.top + tabRect.height / 2 - contentRect.top : -30,
+    });
+    setActivePanel(index);
+  };
+
   useEffect(() => {
     if (displayMode !== "command") return undefined;
     const handleKey = (event) => {
@@ -192,11 +213,11 @@ function App() {
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true']"))) return;
       event.preventDefault();
-      setActivePanel((index) => (index + (event.key === "ArrowRight" ? 1 : -1) + panelNames.length) % panelNames.length);
+      activatePanel((activePanel + (event.key === "ArrowRight" ? 1 : -1) + panelNames.length) % panelNames.length);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [displayMode]);
+  }, [displayMode, activePanel]);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -228,11 +249,11 @@ function App() {
     swipeStart.current = null;
     if (Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       ignorePanelClickUntil.current = Date.now() + 400;
-      setActivePanel((index) => (index + (dx < 0 ? 1 : -1) + panelNames.length) % panelNames.length);
+      activatePanel((activePanel + (dx < 0 ? 1 : -1) + panelNames.length) % panelNames.length);
     }
   };
   const selectPanel = (index) => {
-    if (Date.now() >= ignorePanelClickUntil.current) setActivePanel(index);
+    if (Date.now() >= ignorePanelClickUntil.current) activatePanel(index);
   };
   const onWheel = (event) => {
     if (event.target instanceof HTMLElement && event.target.closest(".grid-scroll, .terrain-scene, input, textarea, select")) return;
@@ -246,7 +267,7 @@ function App() {
     if (now - lastWheelMove.current < 450) return;
     wheelDistance.current += event.deltaX;
     if (Math.abs(wheelDistance.current) >= 75) {
-      setActivePanel((index) => (index + (wheelDistance.current > 0 ? 1 : -1) + panelNames.length) % panelNames.length);
+      activatePanel((activePanel + (wheelDistance.current > 0 ? 1 : -1) + panelNames.length) % panelNames.length);
       wheelDistance.current = 0;
       lastWheelMove.current = now;
     }
@@ -259,16 +280,16 @@ function App() {
     </header>
     <fieldset className="display-mode" aria-label="Display mode">
       <legend>View</legend>
-      <label><input type="radio" name="display-mode" checked={displayMode === "standard"} onChange={() => setDisplayMode("standard")} /> Standard view</label>
-      <label><input type="radio" name="display-mode" checked={displayMode === "command"} onChange={() => setDisplayMode("command")} /> Command center view</label>
+      <label><input type="radio" name="display-mode" checked={displayMode === "standard"} onChange={() => { setPanelTransition(null); setDisplayMode("standard"); }} /> Standard view</label>
+      <label><input type="radio" name="display-mode" checked={displayMode === "command"} onChange={() => { setPanelTransition(null); setDisplayMode("command"); }} /> Command center view</label>
     </fieldset>
-    {displayMode === "command" && <nav className="panel-nav" aria-label="Command center panels">
-      {panelNames.map((name, index) => <button key={name} type="button" aria-pressed={activePanel === index} onClick={() => setActivePanel(index)}>{name}</button>)}
+    {displayMode === "command" && <nav className="panel-nav" ref={panelNavRef} aria-label="Command center panels">
+      {panelNames.map((name, index) => <button key={name} type="button" aria-pressed={activePanel === index} onClick={() => activatePanel(index)}>{name}</button>)}
       <small className="nav-help">Choose a panel, use ← / →, or swipe horizontally. Scroll vertically inside the active panel.</small>
       <span className="sr-only" aria-live="polite">{panelNames[activePanel]} active</span>
     </nav>}
-    <div className={displayMode === "command" ? "command-center-content" : "standard-content"} onTouchStart={displayMode === "command" ? onTouchStart : undefined} onTouchEnd={displayMode === "command" ? onTouchEnd : undefined} onWheel={displayMode === "command" ? onWheel : undefined}>
-    <PanelFrame mode={displayMode} index={1} activeIndex={activePanel} onSelect={selectPanel}>
+    <div className={displayMode === "command" ? "command-center-content" : "standard-content"} ref={commandContentRef} onTouchStart={displayMode === "command" ? onTouchStart : undefined} onTouchEnd={displayMode === "command" ? onTouchEnd : undefined} onWheel={displayMode === "command" ? onWheel : undefined}>
+    <PanelFrame mode={displayMode} index={1} activeIndex={activePanel} onSelect={selectPanel} transition={panelTransition}>
     <fieldset className="condition-switch" aria-label="Population condition">
       <legend>Population condition for the grid and single sample</legend>
       <label><input type="radio" name="population-condition" checked={condition === "Baseline"} onChange={() => setCondition("Baseline")} /> Baseline</label>
@@ -307,7 +328,7 @@ function App() {
       </dl>
     </section>}
     </PanelFrame>
-    <PanelFrame mode={displayMode} index={0} activeIndex={activePanel} onSelect={selectPanel}>
+    <PanelFrame mode={displayMode} index={0} activeIndex={activePanel} onSelect={selectPanel} transition={panelTransition}>
     <div className="layout">
       <section className="grid-section" aria-labelledby="grid-title">
         <div className="grid-heading"><h2 id="grid-title">{condition} · appointments by week and weekday</h2><p>Weeks run left to right; weekdays run top to bottom. Each cell stacks 20 marks in {condition === "Baseline" ? "original slot order" : "new sorted order"}. {displayMode === "command" ? "Sampled marks orange with a dark outline; unsampled marks blue." : "Sampled marks outlined; unsampled faded."} Hover for visit ID, week, weekday, original slot, visit type, wait{condition !== "Baseline" ? ", and new position" : ""}.</p></div>
@@ -352,7 +373,7 @@ function App() {
       </aside>
     </div>
     </PanelFrame>
-    <PanelFrame mode={displayMode} index={2} activeIndex={activePanel} onSelect={selectPanel}>
+    <PanelFrame mode={displayMode} index={2} activeIndex={activePanel} onSelect={selectPanel} transition={panelTransition}>
     <section className="experiments" aria-labelledby="experiment-title">
       <h2 id="experiment-title">Repeated-sampling experiments</h2>
       <p>Each dot is one sample estimate. The grid above shows one sample; the plots below show estimates across repetitions or all possible starts. The {displayMode === "command" ? "coral" : "red"} line is the true population mean: {populationMean.toFixed(2)} minutes.</p>
@@ -368,13 +389,13 @@ function App() {
       </> : <p>No experiment results yet. Press Run Experiments A and B when you are ready to investigate.</p>}
     </section>
     </PanelFrame>
-    <PanelFrame mode={displayMode} index={3} activeIndex={activePanel} onSelect={selectPanel}>
+    <PanelFrame mode={displayMode} index={3} activeIndex={activePanel} onSelect={selectPanel} transition={panelTransition}>
     <section className="experiment-b" aria-labelledby="experiment-b-title">
       {(experiments || displayMode === "command") && <h3 id="experiment-b-title">Experiment B · simple random at n = 1, 10 and 100</h3>}
       {experiments ? experiments.B.map((result) => <EstimatePlot key={`${experimentRun}-${result.n}`} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={`Simple random, n = ${result.n}`} commandMode={displayMode === "command"} reducedMotion={reducedMotion} />) : displayMode === "command" ? <p>No experiment results yet. Run Experiments A and B in the Experiment A panel when you are ready to investigate.</p> : null}
     </section>
     </PanelFrame>
-    <PanelFrame mode={displayMode} index={4} activeIndex={activePanel} onSelect={selectPanel}>
+    <PanelFrame mode={displayMode} index={4} activeIndex={activePanel} onSelect={selectPanel} transition={panelTransition}>
     <section className="experiments challenge" aria-labelledby="challenge-title">
       <h2 id="challenge-title">Your challenge · baseline versus sorted copy</h2>
       <p>At n = 100, compare systematic and simple random sampling on both conditions. The sorted copy changes row order within each day, longest wait first; its true mean is recalculated from its own rows. Each result is measured against the true mean of its own condition.</p>

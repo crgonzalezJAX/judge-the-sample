@@ -268,11 +268,15 @@ On hud-experiment, Command center, Experiments A, B and Challenge plots: when re
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5h  (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
+3D terrain layout fixes (Command center, both Overview and Detail): 1) Move the key box ("Weeks 1–100 · Focus…", days, slots, height) out of the 3D canvas to a tidy horizontal legend below it. 2) Lower the scene about 25% in the canvas (adjust camera target/framing) so the top of the columns is never hidden. 3) Fix overlapping labels near the focused week: space them so week, day, slot and height labels never overlap; drop or shorten any that collide. Do not change sampling.js or results. Run checks and build; leave app stopped.
 **What Codex did:**
 **What I checked myself:**
 
+## E1.5j  (1-4). Setup (Agent mode) – 2026-11-18
 **Prompt:**
+Command center polish: 1) Panel transition: inactive panels float faintly in the background (blurred, low opacity, slight depth); when a tab is chosen, its panel materializes out of that tab: scales and unfolds from the tab's position with a brief particle or scan-line effect, about 600 ms, while the previous panel dissolves back. Reduced motion = instant switch. 2) Fix the cut-off left edge in Experiment A (and check all panels for horizontal clipping). No new dependencies; do not change sampling.js or results. Run checks and build; leave app stopped.
 **What Codex did:**
 **What I checked myself:**
 
