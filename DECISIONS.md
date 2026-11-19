@@ -38,6 +38,11 @@ I chose the following: Condition switch, and as it follows my methodology of one
 I added a sorted grid as it shows each appointment at its new sorted position because it shows the order systematic sampling follows.
 Finally I chose the alternative method which was the simple random sampling on both baseline and sorted.
 
+Design revision, November 19, 2026
+I transposed the grid (weeks left to right, days top to bottom) so marks are larger on a wide screen
+I added an optional Command center view (Standard view is still the default) with a 3D terrain (height = wait time, one week in focus) and animated plots
+The sampling rules, results and findings are unchanged: presentation only
+
 ## 3. Results table
 
 One row per result I read from my app. Add rows as needed. Rerun and update a row whenever I
