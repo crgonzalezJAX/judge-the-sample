@@ -183,11 +183,25 @@ Update the content package.json and run_app.sh
 **What I checked myself:**
 Went on the site
 
+## E1. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+I have switched you to Plan mode. Stay in Plan mode and do not create, edit or delete any files. I am now on a separate git branch called hud-experiment to explore an optional presentation layer; the sampling rules and AGENT_BRIEF.md still apply in full.
+Idea: an optional "holographic command center" view. The app's existing sections become floating translucent panels in a 3D carousel: Population grid, Three sampling methods, Experiment A, Experiment B, and Challenge. The user navigates by trackpad or touch swipe, arrow keys, or clicking a panel; the active panel rotates to the front and the others drift back and dim. It is a dark, glowing HUD style, but all numbers, labels and the true-mean lines stay solid and high-contrast so a clinician can read them.
+Constraints: presentation only. Do not change the shared sampling module, estimators, seeds, labels or results. Reuse the existing components inside the panels rather than rebuilding them. Add a clear toggle between the "Standard view" (the current app, the default) and the "Command center view". Overview must still fit all 100 weeks inside its panel. It must work on a normal laptop and on GitHub Pages, with no webcam and no backend.
+Propose two distinct ways to build this (for example, CSS 3D transforms versus Three.js), and for each explain the strengths, limitations, dependencies, performance with 10,000 grid
 **What Codex did:**
 **What I checked myself:**
 
+## E1b. Setup (Agent mode) – 2026-11-17
 **Prompt:**
+Switch to implementation. Build the CSS 3D carousel as an optional "Command center view" on this hud-experiment branch.
+- Toggle at the top: "Standard view" (default, unchanged) vs "Command center view".
+- Five panels reusing existing components: Population grid, Sampling methods, Experiment A, Experiment B, Challenge. Active panel faces forward at full readable size; others recede, dim and leave the tab order.
+- Navigate by panel buttons, left/right arrow keys (not while typing in inputs), and deliberate horizontal swipe; vertical scroll inside a panel still works.
+- Dark glowing HUD frames, but numbers, labels and true-mean lines stay solid and high-contrast. Overview still fits all 100 weeks in its panel.
+- Respect prefers-reduced-motion (switch panels without rotation). No new dependencies.
+- Do not change sampling.js, estimators, seeds, labels or results.
+- Run the existing checks and the build; tell me which pass. Leave the app stopped.
 **What Codex did:**
 **What I checked myself:**
 

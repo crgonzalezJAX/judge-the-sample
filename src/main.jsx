@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import csv from "../data/clinic_visits.csv?raw";
 import { parseClinicCsv, simpleRandomSample, systematicSample, stratifiedSample, sampleMean, trueMean, weightedStratifiedMean, sortedWithinDaysCopy, runBaselineExperiments, runChallenge } from "./sampling.js";
@@ -51,7 +51,54 @@ function EstimatePlot({ result, domain, populationMean, title, condition = "Base
   </div>;
 }
 
+const panelNames = ["Population grid", "Sampling methods", "Experiment A", "Experiment B", "Challenge"];
+
+function PanelFrame({ mode, index, activeIndex, onSelect, children }) {
+  const active = mode === "standard" || index === activeIndex;
+  const offset = index - activeIndex;
+  const direction = Math.sign(offset);
+  const distance = Math.min(Math.abs(offset), 2);
+  const style = mode === "command" ? {
+    "--panel-x": `${direction * (46 + distance * 10)}%`,
+    "--panel-z": `${-distance * 180}px`,
+    "--panel-rotation": `${-direction * 24}deg`,
+    "--panel-scale": `${1 - distance * 0.1}`,
+    zIndex: 10 - distance,
+  } : undefined;
+  return <section className={`panel-frame ${active ? "is-active" : "is-inactive"}`} style={style} aria-label={panelNames[index]}>
+    <div className="panel-body" aria-hidden={!active} ref={(node) => { if (node) node.inert = !active; }}>
+      {mode === "command" && <h2 className="panel-title" tabIndex={active ? -1 : undefined}>{panelNames[index]}</h2>}
+      {children}
+    </div>
+    {mode === "command" && !active && <button className="panel-open" type="button" onClick={() => onSelect(index)} aria-label={`Open ${panelNames[index]} panel`}>{panelNames[index]}</button>}
+  </section>;
+}
+
+const CalendarGrid = React.memo(function CalendarGrid({ view, condition, byWeekDay, sampledIds }) {
+  return <div className="calendar" role="table" aria-label="Appointments by week and weekday">
+    <div className="corner" role="columnheader">Week ↓ / weekday →</div>
+    {days.map((day) => <div className="day-header" role="columnheader" key={day}>{day}</div>)}
+    {Array.from({ length: 100 }, (_, index) => index + 1).map((week) => <React.Fragment key={week}>
+      <div className="week-label" role="rowheader" aria-label={`Week ${week}`} title={`Week ${week}`}>{view === "detail" || week === 1 || week % 10 === 0 ? week : ""}</div>
+      {days.map((day) => <div className="day-cell" role="cell" aria-label={`Week ${week}, ${day}`} key={day}>
+        {(byWeekDay.get(`${week}-${day}`) || []).map((row) => {
+          const selected = sampledIds.has(row.visit_id);
+          const label = `Original visit ID ${row.visit_id}; week ${row.week}, ${row.weekday}, original slot ${row.slot}; ${row.visit_type}; wait ${row.wait_time} minutes${condition === "Baseline" ? "" : `; new position within day ${row.sorted_position}`}${selected ? "; sampled" : ""}`;
+          return <span className={`mark ${selected ? "selected" : "unsampled"}`} style={{ backgroundColor: colour(row.wait_time) }} title={label} aria-label={label} tabIndex={selected ? 0 : -1} key={row.visit_id} />;
+        })}
+      </div>)}
+    </React.Fragment>)}
+  </div>;
+});
+
 function App() {
+  const [displayMode, setDisplayMode] = useState("standard");
+  const [activePanel, setActivePanel] = useState(0);
+  const swipeStart = useRef(null);
+  const ignorePanelClickUntil = useRef(0);
+  const wheelDistance = useRef(0);
+  const lastWheelMove = useRef(0);
+  const lastWheelEvent = useRef(0);
   const [view, setView] = useState("overview");
   const [condition, setCondition] = useState("Baseline");
   const [method, setMethod] = useState("srs");
@@ -71,7 +118,7 @@ function App() {
     stratified: n >= 3 ? stratifiedSample(activePopulation, n, seed) : null,
   } : null, [activePopulation, n, seed, validN]);
   const current = samples?.[method] ?? null;
-  const sampledIds = new Set(current?.rows.map((row) => row.visit_id) ?? []);
+  const sampledIds = useMemo(() => new Set(current?.rows.map((row) => row.visit_id) ?? []), [current]);
   const estimate = current ? method === "stratified" ? weightedStratifiedMean(current.strata) : sampleMean(current.rows) : null;
   const methodName = { srs: "Simple random", systematic: "Systematic", stratified: "Stratified" }[method];
   const allResults = experiments ? [...experiments.A, ...experiments.B] : [];
@@ -86,11 +133,78 @@ function App() {
   const challengePadding = Math.max((challengeMax - challengeMin) * 0.05, 0.5);
   const challengeDomain = [challengeMin - challengePadding, challengeMax + challengePadding];
 
-  return <main>
+  useEffect(() => {
+    if (displayMode !== "command") return undefined;
+    const handleKey = (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true']"))) return;
+      event.preventDefault();
+      setActivePanel((index) => (index + (event.key === "ArrowRight" ? 1 : -1) + panelNames.length) % panelNames.length);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [displayMode]);
+
+  useEffect(() => {
+    if (displayMode !== "command") return;
+    const title = document.querySelector(".command-center-content .panel-frame.is-active .panel-title");
+    title?.focus({ preventScroll: true });
+  }, [displayMode, activePanel]);
+
+  const onTouchStart = (event) => {
+    const touch = event.touches[0];
+    swipeStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+  const onTouchEnd = (event) => {
+    if (!swipeStart.current) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - swipeStart.current.x;
+    const dy = touch.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+    if (Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      ignorePanelClickUntil.current = Date.now() + 400;
+      setActivePanel((index) => (index + (dx < 0 ? 1 : -1) + panelNames.length) % panelNames.length);
+    }
+  };
+  const selectPanel = (index) => {
+    if (Date.now() >= ignorePanelClickUntil.current) setActivePanel(index);
+  };
+  const onWheel = (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest(".grid-scroll, input, textarea, select")) return;
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.5) {
+      wheelDistance.current = 0;
+      return;
+    }
+    const now = Date.now();
+    if (now - lastWheelEvent.current > 250) wheelDistance.current = 0;
+    lastWheelEvent.current = now;
+    if (now - lastWheelMove.current < 450) return;
+    wheelDistance.current += event.deltaX;
+    if (Math.abs(wheelDistance.current) >= 75) {
+      setActivePanel((index) => (index + (wheelDistance.current > 0 ? 1 : -1) + panelNames.length) % panelNames.length);
+      wheelDistance.current = 0;
+      lastWheelMove.current = now;
+    }
+  };
+
+  return <main className={displayMode === "command" ? "command-mode" : undefined}>
     <header>
       <h1>Clinic waiting times</h1>
       <p>Finite population: all {population.length.toLocaleString()} appointments in this file. Baseline file order is chronological: weeks 1–100, Mon–Fri, slots 1–20 each day. Interval sampling of an unordered list means something different from sampling a chronological record.</p>
     </header>
+    <fieldset className="display-mode" aria-label="Display mode">
+      <legend>View</legend>
+      <label><input type="radio" name="display-mode" checked={displayMode === "standard"} onChange={() => setDisplayMode("standard")} /> Standard view</label>
+      <label><input type="radio" name="display-mode" checked={displayMode === "command"} onChange={() => setDisplayMode("command")} /> Command center view</label>
+    </fieldset>
+    {displayMode === "command" && <nav className="panel-nav" aria-label="Command center panels">
+      {panelNames.map((name, index) => <button key={name} type="button" aria-pressed={activePanel === index} onClick={() => setActivePanel(index)}>{name}</button>)}
+      <small className="nav-help">Choose a panel, use ← / →, or swipe horizontally. Scroll vertically inside the active panel.</small>
+      <span className="sr-only" aria-live="polite">{panelNames[activePanel]} active</span>
+    </nav>}
+    <div className={displayMode === "command" ? "command-center-content" : "standard-content"} onTouchStart={displayMode === "command" ? onTouchStart : undefined} onTouchEnd={displayMode === "command" ? onTouchEnd : undefined} onWheel={displayMode === "command" ? onWheel : undefined}>
+    <PanelFrame mode={displayMode} index={1} activeIndex={activePanel} onSelect={selectPanel}>
     <fieldset className="condition-switch" aria-label="Population condition">
       <legend>Population condition for the grid and single sample</legend>
       <label><input type="radio" name="population-condition" checked={condition === "Baseline"} onChange={() => setCondition("Baseline")} /> Baseline</label>
@@ -120,6 +234,8 @@ function App() {
         {samples?.stratified && <small>Proportional allocation: {samples.stratified.strata.map((s) => `${s.name} ${s.allocation} (weight ${s.weight.toFixed(3)})`).join("; ")}. Seed controls draws.</small>}
       </section>
     </div>
+    </PanelFrame>
+    <PanelFrame mode={displayMode} index={0} activeIndex={activePanel} onSelect={selectPanel}>
     <div className="layout">
       <section className="grid-section" aria-labelledby="grid-title">
         <div className="grid-heading"><h2 id="grid-title">{condition} · appointments by week and weekday</h2><p>20 marks per cell in {condition === "Baseline" ? "original slot order" : "new sorted order"}. Sampled marks outlined; unsampled faded. Hover for visit ID, week, weekday, original slot, visit type, wait{condition !== "Baseline" ? ", and new position" : ""}.</p></div>
@@ -129,20 +245,7 @@ function App() {
           <label><input type="radio" name="grid-view" value="detail" checked={view === "detail"} onChange={() => setView("detail")} /> Detail — larger marks</label>
         </fieldset>
         <div className={`grid-scroll ${view}`}>
-          <div className="calendar" role="table" aria-label="Appointments by week and weekday">
-            <div className="corner" role="columnheader">Week ↓ / weekday →</div>
-            {days.map((day) => <div className="day-header" role="columnheader" key={day}>{day}</div>)}
-            {Array.from({ length: 100 }, (_, index) => index + 1).map((week) => <React.Fragment key={week}>
-              <div className="week-label" role="rowheader" aria-label={`Week ${week}`} title={`Week ${week}`}>{view === "detail" || week === 1 || week % 10 === 0 ? week : ""}</div>
-              {days.map((day) => <div className="day-cell" role="cell" aria-label={`Week ${week}, ${day}`} key={day}>
-                {(byWeekDay.get(`${week}-${day}`) || []).map((row) => {
-                  const selected = sampledIds.has(row.visit_id);
-                  const label = `Original visit ID ${row.visit_id}; week ${row.week}, ${row.weekday}, original slot ${row.slot}; ${row.visit_type}; wait ${row.wait_time} minutes${condition === "Baseline" ? "" : `; new position within day ${row.sorted_position}`}${selected ? "; sampled" : ""}`;
-                  return <span className={`mark ${selected ? "selected" : "unsampled"}`} style={{ backgroundColor: colour(row.wait_time) }} title={label} aria-label={label} tabIndex={selected ? 0 : -1} key={row.visit_id} />;
-                })}
-              </div>)}
-            </React.Fragment>)}
-          </div>
+          <CalendarGrid view={view} condition={condition} byWeekDay={byWeekDay} sampledIds={sampledIds} />
         </div>
         <div className="legend" aria-label={`Wait time colour legend from ${minWait} to ${maxWait} minutes`}><span>Wait time</span><span>Shorter: {minWait} min</span><div className="gradient" /><span>Longer: {maxWait} min</span></div>
         <p className="axis-note">Within each weekday cell: {condition === "Baseline" ? "original slots" : "new sorted positions"} 1–10, then 11–20, left to right. {condition !== "Baseline" && "Hover to see the original slot."}</p>
@@ -157,6 +260,8 @@ function App() {
         <p>This true population mean is recalculated from all {activePopulation.length.toLocaleString()} appointments in the selected condition.</p>
       </aside>
     </div>
+    </PanelFrame>
+    <PanelFrame mode={displayMode} index={2} activeIndex={activePanel} onSelect={selectPanel}>
     <section className="experiments" aria-labelledby="experiment-title">
       <h2 id="experiment-title">Repeated-sampling experiments</h2>
       <p>Each dot is one sample estimate. The grid above shows one sample; the plots below show estimates across repetitions or all possible starts. The red line is the true population mean: {populationMean.toFixed(2)} minutes.</p>
@@ -169,10 +274,16 @@ function App() {
         <p className="result-label">Current results from the last Run. Changing controls above does not change these results until you run again. Simple random n = 100 is reused in A and B.</p>
         <h3>Experiment A · methods at n = 100</h3>
         {experiments.A.map((result) => <EstimatePlot key={result.method} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={{ srs: "Simple random", systematic: "Systematic", stratified: "Stratified" }[result.method]} />)}
-        <h3>Experiment B · simple random at n = 1, 10 and 100</h3>
-        {experiments.B.map((result) => <EstimatePlot key={result.n} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={`Simple random, n = ${result.n}`} />)}
       </> : <p>No experiment results yet. Press Run Experiments A and B when you are ready to investigate.</p>}
     </section>
+    </PanelFrame>
+    <PanelFrame mode={displayMode} index={3} activeIndex={activePanel} onSelect={selectPanel}>
+    <section className="experiment-b" aria-labelledby="experiment-b-title">
+      {(experiments || displayMode === "command") && <h3 id="experiment-b-title">Experiment B · simple random at n = 1, 10 and 100</h3>}
+      {experiments ? experiments.B.map((result) => <EstimatePlot key={result.n} result={result} domain={plotDomain} populationMean={experiments.populationMean} title={`Simple random, n = ${result.n}`} />) : displayMode === "command" ? <p>No experiment results yet. Run Experiments A and B in the Experiment A panel when you are ready to investigate.</p> : null}
+    </section>
+    </PanelFrame>
+    <PanelFrame mode={displayMode} index={4} activeIndex={activePanel} onSelect={selectPanel}>
     <section className="experiments challenge" aria-labelledby="challenge-title">
       <h2 id="challenge-title">Your challenge · baseline versus sorted copy</h2>
       <p>At n = 100, compare systematic and simple random sampling on both conditions. The sorted copy changes row order within each day, longest wait first; its true mean is recalculated from its own rows. Each result is measured against the true mean of its own condition.</p>
@@ -187,6 +298,8 @@ function App() {
         </div>
       </> : <p>No challenge results yet. Press Run challenge when you are ready to investigate.</p>}
     </section>
+    </PanelFrame>
+    </div>
   </main>;
 }
 
